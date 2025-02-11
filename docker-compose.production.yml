@@ -1,0 +1,7 @@
+version: '3.0'
+
+services:
+  user-service:
+    build:
+      context: .
+    command: npm run start:prod

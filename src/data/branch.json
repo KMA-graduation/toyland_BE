@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Adidas",
+    "slug": "adidas",
+    "logo": ""
+  },
+  {
+    "name": "Nike",
+    "slug": "nike",
+    "logo": ""
+  },
+  {
+    "name": "Puma",
+    "slug": "puma",
+    "logo": ""
+  },
+  {
+    "name": "Vans",
+    "slug": "vans",
+    "logo": ""
+  },
+  {
+    "name": "Converse",
+    "slug": "converse",
+    "logo": ""
+  }
+]

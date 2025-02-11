@@ -1,0 +1,16 @@
+extends baseEmail
+
+block content
+    p Xin chào #{email},
+    p Chào mừng đến với cửa hàng của chúng tôi, chúng tôi rất vui khi có bạn 🎉🙏
+    table.btn.btn-primary(role='presentation', border='0', cellpadding='0', cellspacing='0')
+        tbody
+            tr
+                td(align='left')
+                    table(role='presentation', border='0', cellpadding='0', cellspacing='0')
+                        tbody
+                            tr
+                                td
+                                    a(href=`${url}`, target='_blank') Mua sắm ngay
+    p Nếu bạn cần bất kỳ trợ giúp nào về việc hỗ trợ mua sắm, vui lòng liên hệ với tôi
+    p Nguyễn Văn Dũng

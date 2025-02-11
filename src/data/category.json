@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Giày",
+    "slug": "giay"
+  },
+  {
+    "name": "Quần áo",
+    "slug": "quan-ao"
+  },
+  {
+    "name": "Nam",
+    "slug": "nam"
+  },
+  {
+    "name": "Nữ",
+    "slug": "nu"
+  },
+  {
+    "name": "Trẻ em",
+    "slug": "tre-em"
+  },
+  {
+    "name": "Phụ kiện",
+    "slug": "phu-kien"
+  },
+  {
+    "name": "Thương hiệu",
+    "slug": "thuong-hieu"
+  }
+]

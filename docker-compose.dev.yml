@@ -1,0 +1,8 @@
+version: '3.0'
+
+services:
+  ecommerce-service:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: npm run dev

@@ -1,0 +1,40 @@
+version: '3.0'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=123456
+      - POSTGRES_DB=ecommerce
+    ports:
+      - 5432:5432
+    volumes:
+      - ~/apps/postgres:/data/db
+    # networks:
+    #   - ecommerce-network
+
+  # ecommerce-service:
+  #   container_name: ecommerce-service
+  #   image: ecommerce-service
+  #   env_file:
+  #     - .env
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   volumes:
+  #     - ./:/app
+  #     - /app/node_modules
+  #   depends_on:
+  #     - postgres
+  #   restart: unless-stopped
+  #   networks:
+  #     - ecommerce-network
+# networks:
+#   ecommerce-network:
+#     driver: bridge
+
+# volumes:
+#   postgres-data:
