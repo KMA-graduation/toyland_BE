@@ -33,6 +33,15 @@ export class UserEntity {
   })
   isActive: boolean;
 
+  @Column()
+  source: string;
+
+  @Column()
+  shopifyCustomerId: string;
+
+  @Column()
+  shopbaseCustomerId: string;
+
   @CreateDateColumn({
     default: new Date(),
     type: 'timestamp',

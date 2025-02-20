@@ -43,23 +43,28 @@ export class OrderEntity {
   @Column()
   note: string;
 
-  @Column({
-    enum: [
-      'in_cart',
-      'waiting_confirm',
-      'confirmed',
-      'shipping',
-      'received',
-      'success',
-      'reject',
-    ],
-  })
+  @Column()
   status: string;
+
+  @Column()
+  financialStatus: string;
+
+  @Column()
+  fulfillmentStatus: string;
 
   @Column({
     default: true,
   })
   isActive: boolean;
+
+  @Column()
+  source: string;
+
+  @Column()
+  shopifyOrderId: string;
+
+  @Column()
+  shopbaseOrderId: string;
 
   @CreateDateColumn({
     default: new Date(),

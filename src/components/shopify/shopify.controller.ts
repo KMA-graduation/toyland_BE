@@ -9,10 +9,26 @@ export class ShopifyController {
   constructor(private readonly shopifyService: ShopifyService) {}
 
   @Roles(RoleEnum.ADMIN)
-  @Get('sync')
+  @Get('sync-customer')
+  // @Cron('45 * * * * *')
+  // @Cron(CronExpression.EVERY_10_SECONDS)
+  syncCustomer() {
+    return this.shopifyService.syncCustomer();
+  }
+
+  @Roles(RoleEnum.ADMIN)
+  @Get('sync-product')
   // @Cron('45 * * * * *')
   // @Cron(CronExpression.EVERY_10_SECONDS)
   syncProduct() {
     return this.shopifyService.syncProduct();
+  }
+
+  @Roles(RoleEnum.ADMIN)
+  @Get('sync-order')
+  // @Cron('45 * * * * *')
+  // @Cron(CronExpression.EVERY_10_SECONDS)
+  syncOrder() {
+    return this.shopifyService.syncOrder();
   }
 }
