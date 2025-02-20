@@ -56,6 +56,10 @@ export const escapeCharForSearch = (str: string): string => {
 export const getKeyByObject = (data: Record<string, any>, keyInput: string) => {
   const matchedValues: any[] = [];
 
+  if (data[keyInput]) {
+    matchedValues.push(data[keyInput]);
+  }
+
   function traverse(obj: Record<string, any>) {
     for (const key of Object.keys(obj)) {
       if (typeof obj[key] === 'object' && obj[key] !== null) {
