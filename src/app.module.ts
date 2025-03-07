@@ -20,6 +20,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ExportModule } from '@components/export/export.module';
 import { ShopBaseModule } from '@components/shopbase/shopbase.module';
 import { MailModule } from '@components/mail/mail.module';
+import { MessageModule } from '@components/message/message.module';
+import { MessageGateway } from './gateways/message.gateway';
 
 @Module({
   imports: [
@@ -47,9 +49,9 @@ import { MailModule } from '@components/mail/mail.module';
         max: parseInt(process.env.DATABASE_MAX_POOL) || 20,
       },
       namingStrategy: new SnakeNamingStrategy(),
-      ssl: {
-        rejectUnauthorized: false,
-      },
+      // ssl: {
+      //   rejectUnauthorized: false,
+      // },
     }),
     MailModule,
     ScheduleModule.forRoot(),
@@ -65,8 +67,9 @@ import { MailModule } from '@components/mail/mail.module';
     ShopifyModule,
     ExportModule,
     ShopBaseModule,
+    MessageModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, MessageGateway],
 })
 export class AppModule {}
