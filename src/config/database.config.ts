@@ -7,7 +7,7 @@ dotenv.config();
 
 const ormConfig = {
   type: 'postgres',
-  host: process.env.DATABASE_POSTGRES_HOST || '157.230.32.246',
+  host: process.env.DATABASE_POSTGRES_HOST || 'localhost',
   port: parseInt(process.env.DATABASE_POSTGRES_PORT) || 5432,
   maxPool: parseInt(process.env.DATABASE_MAX_POOL) || 20,
   username: process.env.DATABASE_POSTGRES_USERNAME || 'root',
@@ -29,7 +29,7 @@ const connectionOptions = new DataSource({
   synchronize: false,
   // Run migrations automatically,
   // you can disable this if you prefer running migration manually.
-  migrationsRun: true,
+  migrationsRun: false,
   logging: true,
   extra: {
     max: ormConfig.maxPool,
