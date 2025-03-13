@@ -1,23 +1,51 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { SignUpDto } from './dto/sign-up.dto';
-import { SignInDto } from './dto/sign-in.dto';
+import {
+  AUTH_UPLOAD_FIELD,
+  AUTH_UPLOAD_LIMIT_IMAGES,
+  AUTH_UPLOAD_PATH,
+  PRODUCT_UPLOAD_FILE_TYPES,
+  PRODUCT_UPLOAD_LIMIT_IMAGES,
+} from '@components/product/product.constant';
+import { setUploadOptions } from '@config/multer.config';
 import { Auth } from '@decorators/auth.decorator';
-import { AuthType } from '@enums/auth.enum';
 import { AuthUser } from '@decorators/user.decorator';
 import { UserEntity } from '@entities/user.entity';
-import { AuthRefreshPayload, AuthResponse } from './auth.interface';
+import { AuthType } from '@enums/auth.enum';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  UploadedFile,
+  UploadedFiles,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { AuthService } from './auth.service';
+import { SignInDto } from './dto/sign-in.dto';
+import { SignUpDto } from './dto/sign-up.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('sign-up')
+  @UseInterceptors(
+    FilesInterceptor(
+      AUTH_UPLOAD_FIELD,
+      PRODUCT_UPLOAD_LIMIT_IMAGES,
+      setUploadOptions(AUTH_UPLOAD_PATH, PRODUCT_UPLOAD_FILE_TYPES),
+    ),
+  )
   @Auth(AuthType.Public)
   async signUp(
     @Body()
     signUpDto: SignUpDto,
+    @UploadedFiles() files: Array<Express.Multer.File>,
   ) {
+    if (files) {
+      signUpDto['file'] = { ...files[0] };
+    }
+
     return this.authService.signUp(signUpDto);
   }
 

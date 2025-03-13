@@ -42,6 +42,21 @@ export class UserEntity {
   @Column()
   shopbaseCustomerId: string;
 
+  @Column()
+  avatar: string;
+
+  @CreateDateColumn({
+    default: new Date(),
+    type: 'timestamp',
+  })
+  birth: Date;
+
+  @Column()
+  gender: string;
+
+  @Column()
+  address: string;
+
   @CreateDateColumn({
     default: new Date(),
     type: 'timestamp',

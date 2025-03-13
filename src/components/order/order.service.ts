@@ -2,7 +2,7 @@ import * as querystring from 'qs';
 import * as moment from 'moment';
 import * as crypto from 'crypto';
 import * as Bluebird from 'bluebird';
-import { isEmpty, keyBy, sumBy } from 'lodash';
+import { groupBy, isEmpty, keyBy, sumBy } from 'lodash';
 import { Injectable } from '@nestjs/common';
 import { Connection, In, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -29,6 +29,7 @@ import { CheckoutOrderDto } from './dto/request/checkout-order.dto';
 import { ChangeStatusOrder } from './dto/request/change-status.dto';
 import { CreatePaymentDto } from './dto/request/create-payment.dto';
 import { getKeyByObject } from '@utils/common';
+import { DeleteProductDto } from './dto/request/delete.product.dto';
 
 @Injectable()
 export class OrderService {
@@ -41,6 +42,9 @@ export class OrderService {
 
     @InjectRepository(ProductEntity)
     private readonly productRepository: Repository<ProductEntity>,
+
+    @InjectRepository(ProductImageEntity)
+    private readonly productImageRepository: Repository<ProductImageEntity>,
 
     @InjectRepository(DiscountEntity)
     private readonly discountRepository: Repository<DiscountEntity>,
@@ -189,6 +193,27 @@ export class OrderService {
       query.getCount(),
     ]);
 
+    const productIds = getKeyByObject(orders, 'productId');
+    const [products, productDetails] = await Promise.all([
+      this.productRepository.findBy({ id: In(productIds) }),
+      this.productImageRepository.findBy({ productId: In(productIds) }),
+    ]);
+    const productMap = keyBy(products, 'id');
+    const productImageMap = groupBy(productDetails, 'productId');
+
+    orders.forEach((order) => {
+      const { orderDetails = [] } = order || {};
+      orderDetails.forEach((detail) => {
+        const { productId } = detail;
+        const product = productMap[productId] || {};
+
+        if (!isEmpty(productImageMap[productId])) {
+          product['images'] = productImageMap[productId] || [];
+          detail['product'] = product;
+        }
+      });
+    });
+
     const pages = Math.ceil(number / take) || 1;
     const result = {
       orders,
@@ -258,6 +283,28 @@ export class OrderService {
         ResponseMessageEnum.NOT_FOUND,
       ).toResponse();
     }
+
+    const { orderDetails = [] } = order || {};
+
+    const productIds = getKeyByObject(orderDetails, 'productId');
+
+    const [products, productDetails] = await Promise.all([
+      this.productRepository.findBy({ id: In(productIds) }),
+      this.productImageRepository.findBy({ productId: In(productIds) }),
+    ]);
+    const productMap = keyBy(products, 'id');
+    const productImageMap = groupBy(productDetails, 'productId');
+
+    orderDetails.forEach((detail) => {
+      const { productId } = detail;
+      const product = productMap[productId] || {};
+
+      if (!isEmpty(productImageMap[productId])) {
+        product['images'] = productImageMap[productId] || [];
+        detail['product'] = product;
+      }
+    });
+
     return new ResponseBuilder(order)
       .withCode(ResponseCodeEnum.SUCCESS)
       .withMessage(ResponseMessageEnum.SUCCESS)
@@ -316,6 +363,54 @@ export class OrderService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async deleteProduct(request: DeleteProductDto, user: UserEntity) {
+    const { productIds: deleteProductIds } = request;
+    const currentOrder = await this.orderRepository
+      .createQueryBuilder('o')
+      .select([
+        'o.id AS id',
+        `JSON_AGG(DISTINCT JSONB_BUILD_OBJECT(
+        'productId', od.productId,
+        'unitPrice', od.unitPrice,
+        'amount', od.amount
+      )) AS "orderDetails"`,
+      ])
+      .innerJoin(OrderDetailEntity, 'od', 'od.orderId = o.id')
+      .where('o.status = :status', { status: OrderStatus.IN_CART })
+      .andWhere('o.userId = :userId', { userId: user.id })
+      .groupBy('o.id')
+      .getRawOne();
+
+    if (!currentOrder || isEmpty(currentOrder)) {
+      return new ApiError(
+        ResponseCodeEnum.NOT_FOUND,
+        ResponseMessageEnum.NOT_FOUND,
+      ).toResponse();
+    }
+
+    const currentProductIds = getKeyByObject(currentOrder, 'productId');
+    const isHasProduct = deleteProductIds.every((id) =>
+      currentProductIds.includes(id),
+    );
+
+    if (!isHasProduct) {
+      return new ApiError(
+        ResponseCodeEnum.NOT_FOUND,
+        ResponseMessageEnum.ORDER_IN_CART_NOT_FOUND,
+      ).toResponse();
+    }
+
+    await this.orderDetailRepository.delete({
+      orderId: currentOrder.id,
+      productId: In(deleteProductIds),
+    });
+
+    return new ResponseBuilder()
+      .withCode(ResponseCodeEnum.SUCCESS)
+      .withMessage(ResponseMessageEnum.SUCCESS)
+      .build();
   }
 
   async applyDiscount(request: ApplyDiscountDto, user: UserEntity) {
@@ -590,7 +685,6 @@ export class OrderService {
 
       await this.productRepository.save(products);
     }
-
 
     if (request.status === OrderStatus.SUCCESS) {
       const productIds = getKeyByObject(order, 'productId');

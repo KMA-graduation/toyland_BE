@@ -1,5 +1,5 @@
 import * as bcrypt from 'bcrypt';
-import { isEmpty } from 'class-validator';
+import { isEmpty } from 'lodash';
 import { REQUEST } from '@nestjs/core';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -19,6 +19,11 @@ import { ResponseCodeEnum } from '@enums/response-code.enum';
 import { ResponseBuilder } from '@utils/response-builder';
 import { AuthResponseDto } from './dto/response/auth.response.dto';
 import { MailService } from '@components/mail/mail.service';
+import { join } from 'path';
+import { readFileSync } from 'fs';
+import { unlink } from '@utils/file';
+import { AUTH_UPLOAD_PATH } from '@components/product/product.constant';
+import { CloudinaryService } from '@components/cloudinary/cloudinary.service';
 
 @Injectable()
 export class AuthService {
@@ -32,11 +37,20 @@ export class AuthService {
 
     private readonly jwtService: JwtService,
 
-    private readonly mailService: MailService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async signUp(signUpDto: SignUpDto) {
-    const { email, password, username, role = 0 } = signUpDto;
+    const {
+      email,
+      password,
+      username,
+      role = 0,
+      gender,
+      address,
+      birth,
+    } = signUpDto;
+    const file = signUpDto?.file || ({} as any);
 
     const isExisted = await this.userRepository.findOne({
       where: {
@@ -47,6 +61,26 @@ export class AuthService {
     if (isExisted) {
       throw new BadRequestException(ResponseMessageEnum.EMAIL_EXISTS);
     }
+
+    let avatar: string | undefined;
+    let dateOfBirth: Date | undefined;
+    if (!isEmpty(file)) {
+      const path = join(process.cwd(), file?.path);
+      const readFile = readFileSync(path);
+      const fileUpload = { ...file, buffer: readFile };
+      const uploadImage = await this.cloudinaryService.uploadImage(
+        fileUpload,
+        AUTH_UPLOAD_PATH,
+      );
+
+      await unlink(path); // Delete file after upload success
+      avatar = uploadImage.secure_url;
+    }
+
+    if (birth) {
+      dateOfBirth = new Date(birth);
+    }
+
     const saltOrRounds = 7;
     const hashPassword = await bcrypt.hash(password, saltOrRounds);
 
@@ -55,6 +89,10 @@ export class AuthService {
       email,
       role: Number(role),
       password: hashPassword,
+      gender,
+      address,
+      birth: dateOfBirth,
+      avatar,
     });
 
     const userId = newUser.id;
@@ -64,18 +102,6 @@ export class AuthService {
       this.generateToken(payload),
       this.generateToken(payload, true),
     ]);
-
-    this.mailService.sendMail({
-      email: [email],
-      body: {
-        subject: 'Đăng ký thành công',
-        template: 'welcome',
-        context: {
-          email,
-          url: process.env.BASE_URL || 'http://localhost:5173/',
-        },
-      },
-    });
 
     const response = plainToInstance(
       AuthResponseDto,
@@ -105,12 +131,12 @@ export class AuthService {
       },
     });
 
-    if (!user.isActive) {
-      throw new BadRequestException('Tài khoản của bạn đã bị khóa');
-    }
-
     if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new BadRequestException('Email hoặc mật khẩu không chính xác');
+    }
+
+    if (!user.isActive) {
+      throw new BadRequestException('Tài khoản của bạn đã bị khóa');
     }
 
     const userId = user.id;
