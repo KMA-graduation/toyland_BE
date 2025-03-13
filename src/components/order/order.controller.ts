@@ -25,6 +25,7 @@ import { AuthType } from '@enums/auth.enum';
 import { CreatePaymentDto } from './dto/request/create-payment.dto';
 import { Roles } from '@decorators/roles.decorator';
 import { RoleEnum } from '@enums/role.enum';
+import { DeleteProductDto } from './dto/request/delete.product.dto';
 
 @Controller('orders')
 export class OrderController {
@@ -42,6 +43,14 @@ export class OrderController {
     @AuthUser() user: UserEntity,
   ) {
     return this.orderService.updateCart({ ...param, ...request }, user);
+  }
+
+  @Post('/delete-product')
+  async deleteProduct(
+    @Body() request: DeleteProductDto,
+    @AuthUser() user: UserEntity,
+  ) {
+    return await this.orderService.deleteProduct(request, user);
   }
 
   @Post('/checkout-vnpay')

@@ -7,6 +7,7 @@ import { OrderDetailEntity } from '@entities/order-detail.entity';
 import { ProductEntity } from '@entities/product.entity';
 import { DiscountEntity } from '@entities/discount.entity';
 import { ConfigModule } from '@nestjs/config';
+import { ProductImageEntity } from '@entities/product-image.entity';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ConfigModule } from '@nestjs/config';
       OrderEntity,
       OrderDetailEntity,
       ProductEntity,
+      ProductImageEntity,
       DiscountEntity,
     ]),
     ConfigModule,

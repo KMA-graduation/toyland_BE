@@ -11,19 +11,15 @@ import { UserEntity } from '@entities/user.entity';
 import { RolesGuard } from './guard/roles.guard';
 import { MailModule } from '@components/mail/mail.module';
 import { MailService } from '@components/mail/mail.service';
+import { CloudinaryService } from '@components/cloudinary/cloudinary.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([UserEntity]),
-    JwtModule,
-    ConfigModule,
-    MailModule,
-  ],
+  imports: [TypeOrmModule.forFeature([UserEntity]), JwtModule, ConfigModule],
   controllers: [AuthController],
   providers: [
     AuthService,
     JwtGuard,
-    MailService,
+    CloudinaryService,
     {
       provide: APP_GUARD,
       useClass: AuthGuard,

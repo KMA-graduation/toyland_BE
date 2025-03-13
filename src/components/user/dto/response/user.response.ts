@@ -20,6 +20,15 @@ export class UserResponse {
   role: number;
 
   @Expose()
+  avatar: string;
+
+  @Expose()
+  birth: string;
+
+  @Expose()
+  address: string;
+
+  @Expose()
   isActive: number;
 
   @Expose()
