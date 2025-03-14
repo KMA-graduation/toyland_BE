@@ -1,5 +1,8 @@
+import { GenderEnum } from '@components/auth/auth.constant';
 import {
+  IsDateString,
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -22,7 +25,23 @@ export class CreateUserDto {
   @IsNotEmpty()
   readonly password: string;
 
+   @IsString()
+    @IsNotEmpty()
+    @IsEnum(GenderEnum)
+    readonly gender: string;
+  
+    @IsString()
+    @IsOptional()
+    readonly address?: string;
+  
+    @IsDateString()
+    @IsOptional()
+    birth?: Date;
+
   @IsString()
   @IsOptional()
   readonly role: number;
+
+  @IsOptional()
+  file?: any;
 }

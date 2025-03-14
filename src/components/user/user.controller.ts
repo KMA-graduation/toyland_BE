@@ -18,7 +18,7 @@ import { RoleEnum } from '@enums/role.enum';
 import { Roles } from '@decorators/roles.decorator';
 
 @Controller('users')
-@Roles(RoleEnum.ADMIN)
+// @Roles(RoleEnum.ADMIN)
 export class UserController {
   constructor(private userService: UserService) {}
 
