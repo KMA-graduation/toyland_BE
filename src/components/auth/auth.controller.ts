@@ -23,6 +23,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
+import { UpdateAvatar } from './dto/update-avatar';
 
 @Controller('auth')
 export class AuthController {
@@ -68,5 +69,26 @@ export class AuthController {
   @Auth(AuthType.Jwt)
   getMe(@AuthUser() user: UserEntity) {
     return this.authService.getMe(user);
+  }
+
+  @Post('avatar')
+  @UseInterceptors(
+    FilesInterceptor(
+      AUTH_UPLOAD_FIELD,
+      PRODUCT_UPLOAD_LIMIT_IMAGES,
+      setUploadOptions(AUTH_UPLOAD_PATH, PRODUCT_UPLOAD_FILE_TYPES),
+    ),
+  )
+  @Auth(AuthType.Jwt)
+  async updateAvatar(
+    @Body()
+    request: UpdateAvatar,
+    @UploadedFiles() files: Array<Express.Multer.File>,
+    @AuthUser() user: UserEntity,
+  ) {
+    if (files) {
+      request['file'] = { ...files[0] };
+    }
+    return this.authService.updateAvatar(request, user);
   }
 }

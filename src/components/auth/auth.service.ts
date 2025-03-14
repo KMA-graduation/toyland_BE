@@ -24,6 +24,7 @@ import { readFileSync } from 'fs';
 import { unlink } from '@utils/file';
 import { AUTH_UPLOAD_PATH } from '@components/product/product.constant';
 import { CloudinaryService } from '@components/cloudinary/cloudinary.service';
+import { UpdateAvatar } from './dto/update-avatar';
 
 @Injectable()
 export class AuthService {
@@ -91,7 +92,7 @@ export class AuthService {
       password: hashPassword,
       gender,
       address,
-      birth: dateOfBirth,
+      birth: dateOfBirth || null,
       avatar,
     });
 
@@ -240,5 +241,42 @@ export class AuthService {
       .withCode(ResponseCodeEnum.SUCCESS)
       .withMessage(ResponseMessageEnum.SUCCESS)
       .build();
+  }
+
+  async updateAvatar(request: UpdateAvatar, user: UserEntity) {
+    try {
+      const { file } = request;
+
+      if (!file) {
+        return new ApiError(
+          ResponseCodeEnum.BAD_REQUEST,
+          ResponseMessageEnum.BAD_REQUEST,
+        ).toResponse();
+      }
+
+      const path = join(process.cwd(), file?.path);
+      const readFile = readFileSync(path);
+      const fileUpload = { ...file, buffer: readFile };
+      const uploadImage = await this.cloudinaryService.uploadImage(
+        fileUpload,
+        AUTH_UPLOAD_PATH,
+      );
+
+      await unlink(path); // Delete file after upload success
+      const avatar = uploadImage.secure_url || undefined;
+
+      await this.userRepository.update(user.id, { avatar });
+
+      return new ResponseBuilder()
+        .withCode(ResponseCodeEnum.SUCCESS)
+        .withMessage(ResponseMessageEnum.SUCCESS)
+        .build();
+    } catch (error) {
+      console.log('🚀 [LOGGER] error:', error);
+      return new ResponseBuilder()
+        .withCode(ResponseCodeEnum.SUCCESS)
+        .withMessage(ResponseMessageEnum.SERVER_ERROR)
+        .build();
+    }
   }
 }
