@@ -21,7 +21,7 @@ export class FavoriteEntity {
   rate: number;
 
   @Column()
-  like: boolean;
+  isLike: boolean;
 
   @CreateDateColumn({
     default: new Date(),

@@ -44,4 +44,6 @@ export enum ResponseMessageEnum {
   VNPAY_97 = 'Chữ ký không hợp lệ',
   VNPAY_00 = 'Giao dịch thành công',
   VNPAY_99 = 'Giao dịch thất bại',
+
+  PRODUCT_NOT_FOUND = 'Sản phẩm không tồn tại',
 }

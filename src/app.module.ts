@@ -22,6 +22,7 @@ import { ShopBaseModule } from '@components/shopbase/shopbase.module';
 import { MailModule } from '@components/mail/mail.module';
 import { MessageModule } from '@components/message/message.module';
 import { MessageGateway } from './gateways/message.gateway';
+import { FavoriteModule } from '@components/favorite/favorite.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { MessageGateway } from './gateways/message.gateway';
     ExportModule,
     ShopBaseModule,
     MessageModule,
+    FavoriteModule,
   ],
   controllers: [AppController],
   providers: [AppService, MessageGateway],

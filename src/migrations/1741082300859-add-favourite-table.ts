@@ -4,7 +4,7 @@ export class AddFavouriteTable1741082300859 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
-        name: 'favorite',
+        name: 'favorites',
         columns: [
           {
             name: 'id',
