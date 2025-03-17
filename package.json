@@ -12,6 +12,7 @@
     "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "migrate:create": "ts-node ./node_modules/typeorm/cli.js migration:create",
     "m:generate": "npm run typeorm migration:generate -- -n",
     "m:create": "./node_modules/.bin/ts-node ./node_modules/.bin/typeorm migration:create",
     "m:run": "./node_modules/.bin/ts-node ./node_modules/.bin/typeorm migration:run -d ./src/config/database.config.ts",

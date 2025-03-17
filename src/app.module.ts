@@ -50,9 +50,9 @@ import { FavoriteModule } from '@components/favorite/favorite.module';
         max: parseInt(process.env.DATABASE_MAX_POOL) || 20,
       },
       namingStrategy: new SnakeNamingStrategy(),
-      // ssl: {
-      //   rejectUnauthorized: false,
-      // },
+      ssl: {
+        rejectUnauthorized: false,
+      },
     }),
     MailModule,
     ScheduleModule.forRoot(),
