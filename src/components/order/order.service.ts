@@ -507,6 +507,10 @@ export class OrderService {
       const isOutStock = detail.amount > product.stockAmount;
       serializedOrderDetails[product.id].unitPrice = product.price;
 
+      if (!isOutStock) {
+        product['stockAmount'] -= detail.amount
+      }      
+
       if (isOutStock) {
         productInvalid.push({
           id: product.id,
@@ -686,22 +690,22 @@ export class OrderService {
       await this.productRepository.save(products);
     }
 
-    if (request.status === OrderStatus.SUCCESS) {
-      const productIds = getKeyByObject(order, 'productId');
-      const products = await this.productRepository.findBy({
-        id: In(productIds),
-      });
+    // if (request.status === OrderStatus.SUCCESS) {
+    //   const productIds = getKeyByObject(order, 'productId');
+    //   const products = await this.productRepository.findBy({
+    //     id: In(productIds),
+    //   });
 
-      products.forEach((product) => {
-        const detail = order.orderDetails.find(
-          (item) => item.productId === product.id,
-        );
+    //   products.forEach((product) => {
+    //     const detail = order.orderDetails.find(
+    //       (item) => item.productId === product.id,
+    //     );
 
-        product.stockAmount -= detail.amount;
-      });
+    //     product.stockAmount -= detail.amount;
+    //   });
 
-      await this.productRepository.save(products);
-    }
+    //   await this.productRepository.save(products);
+    // }
 
     return new ResponseBuilder(changedStatusOrder)
       .withCode(ResponseCodeEnum.SUCCESS)
