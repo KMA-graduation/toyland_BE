@@ -79,7 +79,7 @@ export class FavoriteService {
 
       const condition = {
         userId: user.id,
-        isLike: Not(IsNull()),
+        isLike: true,
       };
 
       if (productId) {
