@@ -41,6 +41,11 @@ export class ProductEntity {
   @Column()
   stockAmount: number;
 
+  @Column({
+    default: 0,
+  })
+  sold: number;
+
   @Column()
   type: string;
 
