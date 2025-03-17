@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Not, Repository } from 'typeorm';
+import { In, IsNull, Not, Repository } from 'typeorm';
 
 import { FavoriteEntity } from '@entities/favorite.entity';
 import { ProductEntity } from '@entities/product.entity';
@@ -13,7 +13,8 @@ import { PaginationQuery } from '@utils/pagination.query';
 import { GetLikeRequestDto } from './dto/get-like.request.dto';
 import { AddRateRequestDto } from './dto/add-rate.request.dto';
 import { GetRateRequestDto } from './dto/get-rate.request.dto';
-import { isEmpty, sumBy } from 'lodash';
+import { groupBy, isEmpty, keyBy, sumBy } from 'lodash';
+import { ProductImageEntity } from '@entities/product-image.entity';
 
 @Injectable()
 export class FavoriteService {
@@ -23,6 +24,9 @@ export class FavoriteService {
 
     @InjectRepository(ProductEntity)
     private readonly productRepository: Repository<ProductEntity>,
+
+    @InjectRepository(ProductImageEntity)
+    private readonly productImageRepository: Repository<ProductImageEntity>,
   ) {}
 
   async addLike(request: AddLikeRequestDto, user: UserEntity) {
@@ -74,8 +78,8 @@ export class FavoriteService {
     try {
       const { productId, isGetAll, page, take, skip } = request;
 
-      let favorites;
-      let total;
+      // let favorites;
+      // let total;
 
       const condition = {
         userId: user.id,
@@ -86,23 +90,27 @@ export class FavoriteService {
         condition['productId'] = productId;
       }
 
-      if (isGetAll) {
-        const [data, count] = await this.favoriteRepository.findAndCount({
-          where: condition,
-        });
+      const [data, count] = await this.favoriteRepository.findAndCount({
+        where: condition,
+        ...(isGetAll ? {} : { take, skip }),
+      });
 
-        favorites = data;
-        total = count;
-      } else {
-        const [data, count] = await this.favoriteRepository.findAndCount({
-          where: condition,
-          take,
-          skip,
-        });
+      const productIds = data.map((item) => item.productId);
+      const [products, productDetails] = await Promise.all([
+        this.productRepository.findBy({ id: In(productIds) }),
+        this.productImageRepository.findBy({ productId: In(productIds) }),
+      ]);
+      const productMap = keyBy(products, 'id');
+      const productImageMap = groupBy(productDetails, 'productId');
 
-        favorites = data;
-        total = count;
-      }
+      data.forEach((item) => {
+        const product = productMap[item.productId];
+        product['images'] = productImageMap[item.productId] || [];
+        item['product'] = product;
+      });
+
+      const total = count;
+      const favorites = data;
 
       const pages = Math.ceil(total / take) || 1;
 

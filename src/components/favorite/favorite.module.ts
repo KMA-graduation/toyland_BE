@@ -4,9 +4,10 @@ import { FavoriteController } from './favorite.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FavoriteEntity } from '@entities/favorite.entity';
 import { ProductEntity } from '@entities/product.entity';
+import { ProductImageEntity } from '@entities/product-image.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([FavoriteEntity, ProductEntity])],
+  imports: [TypeOrmModule.forFeature([FavoriteEntity, ProductEntity, ProductImageEntity])],
   controllers: [FavoriteController],
   providers: [FavoriteService],
 })
