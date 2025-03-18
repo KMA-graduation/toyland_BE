@@ -509,6 +509,7 @@ export class OrderService {
 
       if (!isOutStock) {
         product['stockAmount'] -= detail.amount
+        product['sold'] += detail.amount
       }      
 
       if (isOutStock) {
@@ -685,6 +686,7 @@ export class OrderService {
         );
 
         product.stockAmount += detail.amount;
+        product.sold -= detail.amount;
       });
 
       await this.productRepository.save(products);
