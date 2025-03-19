@@ -19,7 +19,7 @@ export class ShopifyController {
   @Roles(RoleEnum.ADMIN)
   @Get('sync-product')
   // @Cron('45 * * * * *')
-  // @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   syncProduct() {
     return this.shopifyService.syncProduct();
   }

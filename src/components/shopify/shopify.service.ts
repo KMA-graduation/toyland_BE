@@ -62,7 +62,7 @@ export class ShopifyService {
   private async fetchProduct(query?: string) {
     const axiosInstance = await this.createAxiosInstance();
     const fetchProduct = await axiosInstance({
-      url: `/admin/api/2024-01/products.json`,
+      url: `/admin/api/2024-01/products.json?${query}`,
       method: 'GET',
     });
 
