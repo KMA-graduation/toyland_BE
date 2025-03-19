@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import {  IsNotEmpty, IsNumber } from 'class-validator';
 
 export class AddRateRequestDto {
   @IsNumber()
@@ -11,4 +11,9 @@ export class AddRateRequestDto {
   @IsNotEmpty()
   @Transform(({ value }) => Number(value))
   rate: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  @Transform(({ value }) => Number(value))
+  orderId: number;
 }

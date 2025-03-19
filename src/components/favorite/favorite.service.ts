@@ -9,12 +9,12 @@ import { ResponseCodeEnum } from '@enums/response-code.enum';
 import { ResponseMessageEnum } from '@enums/response-message.enum';
 import { ResponseBuilder } from '@utils/response-builder';
 import { AddLikeRequestDto } from './dto/add-like.request.dto';
-import { PaginationQuery } from '@utils/pagination.query';
 import { GetLikeRequestDto } from './dto/get-like.request.dto';
 import { AddRateRequestDto } from './dto/add-rate.request.dto';
 import { GetRateRequestDto } from './dto/get-rate.request.dto';
 import { groupBy, isEmpty, keyBy, sumBy } from 'lodash';
 import { ProductImageEntity } from '@entities/product-image.entity';
+import { OrderDetailEntity } from '@entities/order-detail.entity';
 
 @Injectable()
 export class FavoriteService {
@@ -27,6 +27,9 @@ export class FavoriteService {
 
     @InjectRepository(ProductImageEntity)
     private readonly productImageRepository: Repository<ProductImageEntity>,
+
+    @InjectRepository(OrderDetailEntity)
+    private readonly orderDetailRepository: Repository<OrderDetailEntity>,
   ) {}
 
   async addLike(request: AddLikeRequestDto, user: UserEntity) {
@@ -137,45 +140,23 @@ export class FavoriteService {
 
   async addRate(request: AddRateRequestDto, user: UserEntity) {
     try {
-      const { productId } = request;
-
-      const product = await this.productRepository.findOne({
-        where: { id: productId },
-      });
-
-      if (!product) {
-        return new ResponseBuilder()
-          .withCode(ResponseCodeEnum.NOT_FOUND)
-          .withMessage(ResponseMessageEnum.PRODUCT_NOT_FOUND)
-          .build();
-      }
-
-      const favorite = await this.favoriteRepository.findOne({
-        where: { productId, userId: user.id },
-      });
-
-      if (!favorite) {
-        const favoriteEntity = new FavoriteEntity();
-        favoriteEntity.productId = productId;
-        favoriteEntity.userId = user.id;
-        favoriteEntity.rate = request.rate;
-
-        await this.favoriteRepository.save(favoriteEntity);
-      } else {
-        favorite.rate = request.rate;
-        await this.favoriteRepository.save(favorite);
-      }
-
-      return new ResponseBuilder()
-        .withCode(ResponseCodeEnum.SUCCESS)
-        .withMessage(ResponseMessageEnum.CREATE_SUCCESS)
-        .build();
+      const { productId, rate, orderId } = request;
+  
+      const product = await this.validateProduct(productId);
+      if (!product) return this.buildResponse(ResponseCodeEnum.NOT_FOUND, ResponseMessageEnum.PRODUCT_NOT_FOUND);
+  
+      await this.upsertFavorite(productId, user.id, rate);
+  
+      const orderDetail = await this.validateOrderDetail(orderId, productId);
+      if (!orderDetail) return this.buildResponse(ResponseCodeEnum.NOT_FOUND, ResponseMessageEnum.ORDER_DETAIL_NOT_FOUND);
+  
+      orderDetail.isRating = true;
+      await this.orderDetailRepository.save(orderDetail);
+  
+      return this.buildResponse(ResponseCodeEnum.SUCCESS, ResponseMessageEnum.CREATE_SUCCESS);
     } catch (error) {
-      console.log('🚀 [LOGGER] error:', error);
-      return new ResponseBuilder()
-        .withCode(ResponseCodeEnum.SUCCESS)
-        .withMessage(ResponseMessageEnum.SERVER_ERROR)
-        .build();
+      console.error('[ADD_RATE][ERROR]:', error);
+      return this.buildResponse(ResponseCodeEnum.SERVER_ERROR, ResponseMessageEnum.SERVER_ERROR);
     }
   }
 
@@ -245,5 +226,29 @@ export class FavoriteService {
         .withMessage(ResponseMessageEnum.SERVER_ERROR)
         .build();
     }
+  }
+
+  private buildResponse(code: ResponseCodeEnum, message: ResponseMessageEnum) {
+    return new ResponseBuilder().withCode(code).withMessage(message).build();
+  }
+
+  private async validateProduct(productId: number): Promise<ProductEntity | null> {
+    return this.productRepository.findOne({ where: { id: productId } });
+  }
+  
+  private async validateOrderDetail(orderId: number, productId: number): Promise<OrderDetailEntity | null> {
+    return this.orderDetailRepository.findOne({ where: { orderId, productId } });
+  }
+  
+  private async upsertFavorite(productId: number, userId: number, rate: number): Promise<void> {
+    let favorite = await this.favoriteRepository.findOne({ where: { productId, userId } });
+  
+    if (!favorite) {
+      favorite = this.favoriteRepository.create({ productId, userId, rate });
+    } else {
+      favorite.rate = rate;
+    }
+  
+    await this.favoriteRepository.save(favorite);
   }
 }

@@ -114,6 +114,7 @@ export class OrderService {
           amount: product.amount,
           orderId: order.id,
           size: product?.size,
+          isRating: false,
         }),
       );
 
@@ -155,7 +156,7 @@ export class OrderService {
         `JSON_BUILD_OBJECT('id', u.id, 'username', u.username, 'email', u.email) AS user`,
         `JSON_AGG(DISTINCT JSONB_BUILD_OBJECT(
         'productId', qb.productId, 'productName', qb.productName,
-        'unitPrice', qb.unitPrice, 'amount', qb.amount
+        'unitPrice', qb.unitPrice, 'amount', qb.amount, 'isRating', qb.isRating
       )) AS "orderDetails"`,
       ])
       .leftJoin(UserEntity, 'u', 'u.id = o.user_id')
@@ -169,6 +170,7 @@ export class OrderService {
               'p.id AS productId',
               'od.unitPrice AS unitPrice',
               'od.orderId AS orderId',
+              "od.isRating AS isRating",
             ])
             .from(OrderDetailEntity, 'od')
             .leftJoin(ProductEntity, 'p', 'p.id = od.productId'),
@@ -263,6 +265,7 @@ export class OrderService {
               'p.id AS productId',
               'od.unitPrice AS unitPrice',
               'od.orderId AS orderId',
+              'od.isRating AS isRating',
             ])
             .from(OrderDetailEntity, 'od')
             .innerJoin(ProductEntity, 'p', 'p.id = od.productId'),

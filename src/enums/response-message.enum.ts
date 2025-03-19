@@ -39,6 +39,7 @@ export enum ResponseMessageEnum {
   DISCOUNT_EXPIRED = 'Mã giảm giá đã hết hạn',
   ORDER_IN_CART_NOT_FOUND = 'Không tìm thấy sản phẩm trong giỏ hàng',
   ORDER_NOT_FOUND = 'Không tìm thấy đơn hàng',
+  ORDER_DETAIL_NOT_FOUND = 'Không tìm thấy chi tiết đơn hàng',
   NO_ORDER_HISTORY = 'Không có lịch sử đơn hàng',
   VNPAY_07 = 'Trừ tiền thành công. Giao dịch bị nghi ngờ (liên quan tới lừa đảo, giao dịch bất thường).',
   VNPAY_97 = 'Chữ ký không hợp lệ',

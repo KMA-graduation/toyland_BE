@@ -16,4 +16,7 @@ export class OrderDetailEntity {
 
   @Column()
   unitPrice: number;
+
+  @Column()
+  isRating: boolean;
 }
