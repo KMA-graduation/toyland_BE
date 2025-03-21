@@ -16,10 +16,31 @@ import { OrderEntity } from '@entities/order.entity';
 
 import * as Bluebird from 'bluebird';
 import { OrderDetailEntity } from '@entities/order-detail.entity';
+import { CronExpression } from '@nestjs/schedule';
+import * as cron from 'node-cron';
+import { UpdateCronJobDto } from './dto/update-cronjob.dto';
 
 @Injectable()
 export class ShopifyService {
   private readonly logger = new Logger(ShopifyService.name);
+  private cronJobs: Map<string, cron.ScheduledTask> = new Map();
+
+  private cronSchedules = {
+    customer: CronExpression.EVERY_DAY_AT_11PM, //  5 phút
+    product: CronExpression.EVERY_DAY_AT_11PM, //  5 phút
+    order: CronExpression.EVERY_DAY_AT_11PM, //  5 phút
+  };
+
+  onModuleInit() {
+    console.log("Init cron jobs");
+    
+    this.startCronJobs()
+  }
+
+  onModuleDestroy() {
+    this.stopAllCronJobs()
+  }
+
 
   constructor(
     @InjectRepository(ProductEntity)
@@ -390,5 +411,89 @@ export class ShopifyService {
     });
 
     return fetchCustomer?.data?.customers;
+  }
+
+  // CRONJOB FUNCTION
+  public async updateCron(updateCronJobDto: UpdateCronJobDto) {
+    const {job, cronExpression} = updateCronJobDto;
+
+    if (!["customer", "product", "order"].includes(job)) {
+      return new ResponseBuilder()
+        .withCode(ResponseCodeEnum.BAD_REQUEST)
+        .withMessage('Job không hợp lệ')
+        .build();
+    }
+
+    if (cronExpression === 'disable') {
+      this.disableCronJob(job)
+      return new ResponseBuilder()
+        .withCode(ResponseCodeEnum.SUCCESS)
+        .withMessage(`Tắt cron job ${job} thành công`)
+        .build();
+    }
+
+    try {
+      this.updateCronJob(job, cronExpression)
+      return new ResponseBuilder()
+        .withCode(ResponseCodeEnum.SUCCESS)
+        .withMessage(`Cập nhật cron job ${job} thành công`)
+        .build();
+    } catch (error) {
+      return new ResponseBuilder()
+        .withCode(ResponseCodeEnum.SERVER_ERROR)
+        .withMessage(error.message)
+        .build();
+      
+    }
+  }
+
+
+  private startCronJobs() {
+    Object.keys(this.cronSchedules).forEach((key) => {
+      this.createCronJob(key, this.cronSchedules[key])
+    })
+  }
+
+  private createCronJob(key: string, cronExpression: string) {
+    if (this.cronJobs.has(key)) {
+      this.cronJobs.get(key)?.stop()
+      this.cronJobs.delete(key)
+    }
+
+    const task = cron.schedule(cronExpression, () => {
+      if (key === 'customer') {
+        console.log("Start cron job sync customer");
+        this.syncCustomer()
+      }
+      else if (key === 'product') {
+        console.log("Start cron job sync product");
+        this.syncProduct()
+      }
+      else if (key === 'order') {
+        console.log("Start cron job sync order");
+        this.syncOrder()
+      }
+    })
+
+    this.cronJobs.set(key, task)
+  }
+
+  private stopAllCronJobs() {
+    this.cronJobs.forEach((task) => {
+      task.stop()
+    })
+
+    this.cronJobs.clear()
+  }
+
+  private updateCronJob(key: string, cronExpression: string) {
+    this.createCronJob(key, cronExpression)
+  }
+
+  private disableCronJob(key: string) {
+    if (this.cronJobs.has(key)) {
+      this.cronJobs.get(key)?.stop()
+      this.cronJobs.delete(key)
+    }
   }
 }

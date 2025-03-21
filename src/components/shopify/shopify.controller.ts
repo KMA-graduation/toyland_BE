@@ -1,12 +1,20 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ShopifyService } from './shopify.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Roles } from '@decorators/roles.decorator';
 import { RoleEnum } from '@enums/role.enum';
+import { UpdateCronJobDto } from './dto/update-cronjob.dto';
 
 @Controller('shopify')
 export class ShopifyController {
   constructor(private readonly shopifyService: ShopifyService) {}
+
+  @Roles(RoleEnum.ADMIN)
+  @Post("update-cron")
+  updateCron(@Body() updateCronJobDto: UpdateCronJobDto) {
+    return this.shopifyService.updateCron(updateCronJobDto);
+  }
+
 
   @Roles(RoleEnum.ADMIN)
   @Get('sync-customer')
