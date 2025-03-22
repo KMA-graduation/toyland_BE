@@ -32,15 +32,14 @@ export class ShopifyService {
   };
 
   onModuleInit() {
-    console.log("Init cron jobs");
-    
-    this.startCronJobs()
+    console.log('Init cron jobs');
+
+    this.startCronJobs();
   }
 
   onModuleDestroy() {
-    this.stopAllCronJobs()
+    this.stopAllCronJobs();
   }
-
 
   constructor(
     @InjectRepository(ProductEntity)
@@ -343,70 +342,120 @@ export class ShopifyService {
     return fetchOrder?.data?.orders;
   }
 
-  // SYNC CUSTOMER
   public async syncCustomer() {
     try {
-      const customers: ShopifyCustomer[] = await this.fetchCustomer();
-      const users = await this.upsertCustomer(customers);
+      const FIVE_MINUTES = 5 * 60 * 1000;
+      const currentCustomers = await this.userRepository.findBy({
+        shopifyCustomerId: Not(IsNull()),
+      });
 
-      return new ResponseBuilder(users)
+      const pivot = !isEmpty(currentCustomers)
+        ? new Date(Date.now() - FIVE_MINUTES)
+        : new Date(null);
+
+      const updatedAtMin = pivot.toISOString();
+      const limit = 10;
+      let sinceId = '';
+      let customers = [];
+
+      const timestamp = new Date().getTime();
+      this.logger.log(`[SHOPIFY][SYNC_CUSTOMER][START]`);
+      do {
+        const query = this.queryString(updatedAtMin, limit, sinceId);
+        customers = await this.fetchCustomer(query);
+        if (customers.length) {
+          sinceId = customers.at(-1).id;
+        }
+
+        const mappedCustomers = this.mapCustomers(customers);
+
+        for (const customer of mappedCustomers) {
+          await this.upsertCustomer(customer);
+        }
+      } while (customers.length);
+
+      this.logger.log(
+        `[SHOPIFY][SYNC_CUSOMTER][END]: ${new Date().getTime() - timestamp} ms`,
+      );
+
+      return new ResponseBuilder()
         .withCode(ResponseCodeEnum.SUCCESS)
-        .withMessage('Đồng bộ khách hàng thành công')
+        .withMessage('Đồng bộ thành công')
         .build();
     } catch (error) {
-      this.logger.error('[SHOPIFY_SYNC][CUSTOMER][ERROR]: ', error);
+      this.logger.error('[SHOPIFY][SYNC_CUSOMTER][ERROR]: ', error);
 
       return new ResponseBuilder()
         .withCode(ResponseCodeEnum.BAD_REQUEST)
-        .withMessage('Đồng bộ khách hàng thất bại')
+        .withMessage('Đồng bộ thất bại')
         .build();
     }
   }
 
-  private async upsertCustomer(customers: ShopifyCustomer[]) {
-    const emails = getKeyByObject(customers, 'email');
-
-    const currentUsers = await this.userRepository.findBy({
-      email: In(emails),
-    });
-
+  private mapCustomers(customers: ShopifyCustomer[]) {
     const mappedCustomers = customers.map(
       ({ email, first_name, last_name, id }) => {
         return {
           shopifyCustomerId: `${id}`,
           email,
           username: `${first_name || ''} ${last_name || ''}`,
-          source: 'shopify',
         };
       },
     );
 
-    const customerMap = keyBy(mappedCustomers, 'email');
-    const userMap = keyBy(currentUsers, 'email');
-
-    currentUsers.forEach((user) => {
-      const { source: currentSource } = user;
-      const { shopifyCustomerId, username, source } = customerMap[user.email];
-
-      user.username = username;
-      user.source = `shopify`;
-      user.shopifyCustomerId = shopifyCustomerId;
-    });
-
-    const newCustomers = mappedCustomers.filter(({ email }) => !userMap[email]);
-
-    const users = await this.userRepository.save([
-      ...currentUsers,
-      ...newCustomers,
-    ]);
-
-    return users;
+    return mappedCustomers;
   }
 
-  private async fetchCustomer() {
+  private async upsertCustomer(data: {
+    shopifyCustomerId: string;
+    email: string;
+    username: string;
+  }) {
+    const { shopifyCustomerId } = data;
+
+    const currentCustomer = await this.userRepository.findOneBy({
+      shopifyCustomerId,
+    });
+
+    const queryRunner = this.connection.createQueryRunner();
+    await queryRunner.startTransaction();
+
+    try {
+      const customer = new UserEntity();
+      customer.shopifyCustomerId = data.shopifyCustomerId;
+      customer.username = data?.username || '';
+      customer.email = data?.email || '';
+
+      if (currentCustomer) {
+        customer.id = currentCustomer.id;
+        this.logger.log(
+          `[SHOPIFY][UPDATE_CUSTOMER]: shopifyCustomerId: ${shopifyCustomerId}`,
+        );
+      } else {
+        this.logger.log(
+          `[SHOPIFY][CREATE_CUSTOMER]: shopifyCustomerId: ${shopifyCustomerId}`,
+        );
+      }
+
+      await queryRunner.manager.save(customer);
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      console.log('🚀 [LOGGER] error:', error);
+      await queryRunner.rollbackTransaction();
+
+      return new ResponseBuilder()
+        .withCode(ResponseCodeEnum.SERVER_ERROR)
+        .withMessage(error.message)
+        .build();
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  private async fetchCustomer(query?: string) {
     const axiosInstance = await this.createAxiosInstance();
     const fetchCustomer = await axiosInstance({
-      url: `/admin/api/2024-10/customers.json`,
+      url: `/admin/api/2024-10/customers.json?${query}`,
       method: 'GET',
     });
 
@@ -415,9 +464,9 @@ export class ShopifyService {
 
   // CRONJOB FUNCTION
   public async updateCron(updateCronJobDto: UpdateCronJobDto) {
-    const {job, cronExpression} = updateCronJobDto;
+    const { job, cronExpression } = updateCronJobDto;
 
-    if (!["customer", "product", "order"].includes(job)) {
+    if (!['customer', 'product', 'order'].includes(job)) {
       return new ResponseBuilder()
         .withCode(ResponseCodeEnum.BAD_REQUEST)
         .withMessage('Job không hợp lệ')
@@ -425,7 +474,7 @@ export class ShopifyService {
     }
 
     if (cronExpression === 'disable') {
-      this.disableCronJob(job)
+      this.disableCronJob(job);
       return new ResponseBuilder()
         .withCode(ResponseCodeEnum.SUCCESS)
         .withMessage(`Tắt cron job ${job} thành công`)
@@ -433,7 +482,7 @@ export class ShopifyService {
     }
 
     try {
-      this.updateCronJob(job, cronExpression)
+      this.updateCronJob(job, cronExpression);
       return new ResponseBuilder()
         .withCode(ResponseCodeEnum.SUCCESS)
         .withMessage(`Cập nhật cron job ${job} thành công`)
@@ -443,57 +492,53 @@ export class ShopifyService {
         .withCode(ResponseCodeEnum.SERVER_ERROR)
         .withMessage(error.message)
         .build();
-      
     }
   }
 
-
   private startCronJobs() {
     Object.keys(this.cronSchedules).forEach((key) => {
-      this.createCronJob(key, this.cronSchedules[key])
-    })
+      this.createCronJob(key, this.cronSchedules[key]);
+    });
   }
 
   private createCronJob(key: string, cronExpression: string) {
     if (this.cronJobs.has(key)) {
-      this.cronJobs.get(key)?.stop()
-      this.cronJobs.delete(key)
+      this.cronJobs.get(key)?.stop();
+      this.cronJobs.delete(key);
     }
 
     const task = cron.schedule(cronExpression, () => {
       if (key === 'customer') {
-        console.log("Start cron job sync customer");
-        this.syncCustomer()
+        console.log('Start cron job sync customer');
+        this.syncCustomer();
+      } else if (key === 'product') {
+        console.log('Start cron job sync product');
+        this.syncProduct();
+      } else if (key === 'order') {
+        console.log('Start cron job sync order');
+        this.syncOrder();
       }
-      else if (key === 'product') {
-        console.log("Start cron job sync product");
-        this.syncProduct()
-      }
-      else if (key === 'order') {
-        console.log("Start cron job sync order");
-        this.syncOrder()
-      }
-    })
+    });
 
-    this.cronJobs.set(key, task)
+    this.cronJobs.set(key, task);
   }
 
   private stopAllCronJobs() {
     this.cronJobs.forEach((task) => {
-      task.stop()
-    })
+      task.stop();
+    });
 
-    this.cronJobs.clear()
+    this.cronJobs.clear();
   }
 
   private updateCronJob(key: string, cronExpression: string) {
-    this.createCronJob(key, cronExpression)
+    this.createCronJob(key, cronExpression);
   }
 
   private disableCronJob(key: string) {
     if (this.cronJobs.has(key)) {
-      this.cronJobs.get(key)?.stop()
-      this.cronJobs.delete(key)
+      this.cronJobs.get(key)?.stop();
+      this.cronJobs.delete(key);
     }
   }
 }

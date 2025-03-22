@@ -10,11 +10,10 @@ export class ShopifyController {
   constructor(private readonly shopifyService: ShopifyService) {}
 
   @Roles(RoleEnum.ADMIN)
-  @Post("update-cron")
+  @Post('update-cron')
   updateCron(@Body() updateCronJobDto: UpdateCronJobDto) {
     return this.shopifyService.updateCron(updateCronJobDto);
   }
-
 
   @Roles(RoleEnum.ADMIN)
   @Get('sync-customer')
@@ -27,7 +26,7 @@ export class ShopifyController {
   @Roles(RoleEnum.ADMIN)
   @Get('sync-product')
   // @Cron('45 * * * * *')
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  // @Cron(CronExpression.EVERY_5_MINUTES)
   syncProduct() {
     return this.shopifyService.syncProduct();
   }
