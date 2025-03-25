@@ -413,7 +413,7 @@ export class ShopifyService {
     const { shopifyCustomerId, email } = data;
 
     const currentCustomer = await this.userRepository.findOneBy({
-      shopifyCustomerId,
+      // shopifyCustomerId,
       email
     });
 
