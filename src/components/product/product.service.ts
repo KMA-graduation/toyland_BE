@@ -4,7 +4,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { PaginationQuery } from '@utils/pagination.query';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { ProductEntity } from '@entities/product.entity';
-import { Brackets, DataSource, Repository } from 'typeorm';
+import { Brackets, DataSource,Repository } from 'typeorm';
 import { ResponseBuilder } from '@utils/response-builder';
 import { ResponseCodeEnum } from '@enums/response-code.enum';
 import { ResponseMessageEnum } from '@enums/response-message.enum';
@@ -19,6 +19,7 @@ import * as Bluebird from 'bluebird';
 import { PRODUCT_UPLOAD_PATH } from './product.constant';
 import { unlink } from '@utils/file';
 import { escapeCharForSearch } from '@utils/common';
+import { FavoriteEntity } from '@entities/favorite.entity';
 
 @Injectable()
 export class ProductService {
@@ -34,6 +35,9 @@ export class ProductService {
 
     @InjectRepository(CategoryEntity)
     private readonly categoryRepository: Repository<CategoryEntity>,
+
+    @InjectRepository(FavoriteEntity)
+    private readonly favoriteRepository: Repository<FavoriteEntity>,
 
     private readonly cloudinaryService: CloudinaryService,
 
@@ -242,6 +246,19 @@ export class ProductService {
       .getRawOne();
 
     if (!product) throw new NotFoundException(ResponseMessageEnum.NOT_FOUND);
+
+    const productId  = product.id;
+    const favorites = await this.favoriteRepository.find({
+      where: {
+        productId: productId,
+      }
+    })
+    
+    let rating = 0
+    if (favorites.length > 0) {
+      rating = favorites.reduce((acc, cur) => acc + cur?.rate, 0) / favorites.length;
+    }
+    product['rating'] = rating;
 
     return new ResponseBuilder()
       .withData(product)

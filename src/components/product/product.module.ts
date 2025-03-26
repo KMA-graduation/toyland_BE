@@ -7,6 +7,7 @@ import { CategoryEntity } from '@entities/category.entity';
 import { BranchEntity } from '@entities/branch.entity';
 import { ProductImageEntity } from '@entities/product-image.entity';
 import { CloudinaryService } from '@components/cloudinary/cloudinary.service';
+import { FavoriteEntity } from '@entities/favorite.entity';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { CloudinaryService } from '@components/cloudinary/cloudinary.service';
       ProductImageEntity,
       CategoryEntity,
       BranchEntity,
+      FavoriteEntity
     ]),
   ],
   controllers: [ProductController],
