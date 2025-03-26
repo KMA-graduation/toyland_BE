@@ -8,10 +8,8 @@ import { isEmpty, keyBy } from 'lodash';
 import { ResponseBuilder } from '@utils/response-builder';
 import { ResponseCodeEnum } from '@enums/response-code.enum';
 import { ProductImageEntity } from '@entities/product-image.entity';
-import { log } from 'console';
 import { UserEntity } from '@entities/user.entity';
 import { ShopifyCustomer, ShopifyOrder } from './shopify.constant';
-import { getKeyByObject } from '@utils/common';
 import { OrderEntity } from '@entities/order.entity';
 
 import * as Bluebird from 'bluebird';
@@ -82,7 +80,7 @@ export class ShopifyService {
   private async fetchProduct(query?: string) {
     const axiosInstance = await this.createAxiosInstance();
     const fetchProduct = await axiosInstance({
-      url: `/admin/api/2024-01/products.json?${query}`,
+      url: `/admin/api/2024-01/products.json`,
       method: 'GET',
     });
 
@@ -128,6 +126,7 @@ export class ShopifyService {
           description: data?.body_html?.split(/<\/?[^>]+>/)[1] || '',
           price: data?.variants?.[0]?.price,
           stockAmount: data?.variants?.[0]?.inventory_quantity || 0,
+          categoryId: 6
         });
   
         this.logger.log(`[SHOPIFY][CREATE_PRODUCT]: shopify_id: ${data.shopify_id}`);
@@ -181,6 +180,8 @@ export class ShopifyService {
       this.logger.log(`[SHOPIFY][SYNC_PRODUCT][START]`);
       const query = this.queryString(updatedAtMin, limit, sinceId);
       products = await this.fetchProduct(query);
+      console.log('🚀 [LOGGER] products:', products);
+      
       if (products.length) {
         sinceId = products.at(-1).id;
       }

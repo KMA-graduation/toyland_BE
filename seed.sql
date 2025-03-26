@@ -12,6 +12,7 @@ INSERT INTO "public"."categories" ("id", "name", "description", "thumb", "slug",
 INSERT INTO "public"."categories" ("id", "name", "description", "thumb", "slug", "is_active", "created_at", "updated_at") VALUES (3, 'Dây đeo đồng hồ ', NULL, NULL, 'day-deo-dong-ho', 't', '2024-04-24 15:11:22.21062+00', '2024-04-24 15:11:22.21062+00');
 INSERT INTO "public"."categories" ("id", "name", "description", "thumb", "slug", "is_active", "created_at", "updated_at") VALUES (4, 'Đồng hồ nam', NULL, NULL, 'dong-ho-nam', 't', '2024-04-24 15:12:38.802923+00', '2024-04-24 15:12:38.802923+00');
 INSERT INTO "public"."categories" ("id", "name", "description", "thumb", "slug", "is_active", "created_at", "updated_at") VALUES (5, 'Đồng hồ nữ', NULL, NULL, 'dong-ho-nu', 't', '2024-04-24 15:12:42.897159+00', '2024-04-24 15:12:42.897159+00');
+INSERT INTO "public"."categories" ("id", "name", "description", "thumb", "slug", "is_active", "created_at", "updated_at") VALUES (6, 'Khác', NULL, NULL, 'khac', 't', '2024-04-24 15:12:42.897159+00', '2024-04-24 15:12:42.897159+00');
 COMMIT;
 
 BEGIN;
