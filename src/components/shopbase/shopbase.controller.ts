@@ -9,10 +9,26 @@ export class ShopBaseController {
   constructor(private readonly shopBaseService: ShopBaseService) {}
 
   @Roles(RoleEnum.ADMIN)
-  @Get('sync')
+  @Get('sync-product')
   // @Cron('45 * * * * *')
   // @Cron(CronExpression.EVERY_30_SECONDS)
   syncProduct() {
     return this.shopBaseService.syncProduct();
+  }
+
+  @Roles(RoleEnum.ADMIN)
+  @Get('sync-customer')
+  // @Cron('45 * * * * *')
+  // @Cron(CronExpression.EVERY_30_SECONDS)
+  syncCustomer() {
+    return this.shopBaseService.syncCusomer();
+  }
+
+  @Roles(RoleEnum.ADMIN)
+  @Get('sync-draft-order')
+  // @Cron('45 * * * * *')
+  // @Cron(CronExpression.EVERY_30_SECONDS)
+  syncDraftOrder() {
+    return this.shopBaseService.syncDraftOrder();
   }
 }

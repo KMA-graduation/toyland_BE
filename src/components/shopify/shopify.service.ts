@@ -80,7 +80,7 @@ export class ShopifyService {
   private async fetchProduct(query?: string) {
     const axiosInstance = await this.createAxiosInstance();
     const fetchProduct = await axiosInstance({
-      url: `/admin/api/2024-01/products.json`,
+      url: `/admin/api/2024-01/products.json?${query || ''}`,
       method: 'GET',
     });
 
@@ -99,26 +99,31 @@ export class ShopifyService {
   private async upsertProduct(data: any) {
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.startTransaction();
-  
+
     try {
       const existedProduct = await this.productRepository.findOneBy({
         shopifyId: data.shopify_id,
         name: data?.title,
       });
-  
+
       let product: ProductEntity;
-  
+
       if (existedProduct) {
         const stockAmountShopify = data?.variants?.[0]?.inventory_quantity || 0;
         const stockAmount = existedProduct.stockAmount;
         product = Object.assign(new ProductEntity(), existedProduct, {
           name: data?.title ?? existedProduct.name,
-          description: data?.body_html?.split(/<\/?[^>]+>/)[1] || existedProduct.description,
+          description:
+            data?.body_html?.split(/<\/?[^>]+>/)[1] ||
+            existedProduct.description,
           price: data?.variants?.[0]?.price ?? existedProduct.price,
-          stockAmount: stockAmountShopify > stockAmount ? stockAmountShopify : stockAmount,
+          stockAmount:
+            stockAmountShopify > stockAmount ? stockAmountShopify : stockAmount,
         });
-  
-        this.logger.log(`[SHOPIFY][UPDATE_PRODUCT]: shopify_id: ${data.shopify_id}`);
+
+        this.logger.log(
+          `[SHOPIFY][UPDATE_PRODUCT]: shopify_id: ${data.shopify_id}`,
+        );
       } else {
         product = Object.assign(new ProductEntity(), {
           shopifyId: data?.shopify_id,
@@ -126,32 +131,36 @@ export class ShopifyService {
           description: data?.body_html?.split(/<\/?[^>]+>/)[1] || '',
           price: data?.variants?.[0]?.price,
           stockAmount: data?.variants?.[0]?.inventory_quantity || 0,
-          categoryId: 6
+          categoryId: 6,
         });
-  
-        this.logger.log(`[SHOPIFY][CREATE_PRODUCT]: shopify_id: ${data.shopify_id}`);
+
+        this.logger.log(
+          `[SHOPIFY][CREATE_PRODUCT]: shopify_id: ${data.shopify_id}`,
+        );
       }
-  
+
       const result = await queryRunner.manager.save(product);
-  
+
       if (existedProduct) {
-        await queryRunner.manager.delete(ProductImageEntity, { productId: existedProduct.id });
+        await queryRunner.manager.delete(ProductImageEntity, {
+          productId: existedProduct.id,
+        });
       }
-  
+
       const productImages = data?.images?.map((image) => {
         const productImage = new ProductImageEntity();
         productImage.productId = result.id;
         productImage.url = image.src;
         return productImage;
       });
-  
+
       await queryRunner.manager.save(productImages);
-  
+
       await queryRunner.commitTransaction();
     } catch (error) {
       this.logger.error(`[ERROR]: `, error);
       await queryRunner.rollbackTransaction();
-  
+
       return new ResponseBuilder()
         .withCode(ResponseCodeEnum.SERVER_ERROR)
         .withMessage(error.message)
@@ -181,7 +190,7 @@ export class ShopifyService {
       const query = this.queryString(updatedAtMin, limit, sinceId);
       products = await this.fetchProduct(query);
       console.log('🚀 [LOGGER] products:', products);
-      
+
       if (products.length) {
         sinceId = products.at(-1).id;
       }
@@ -363,6 +372,7 @@ export class ShopifyService {
       do {
         const query = this.queryString(updatedAtMin, limit, sinceId);
         customers = await this.fetchCustomer(query);
+        console.log('🚀 [LOGGER] customers:', customers.length);
         if (customers.length) {
           sinceId = customers.at(-1).id;
         }
@@ -415,7 +425,7 @@ export class ShopifyService {
 
     const currentCustomer = await this.userRepository.findOneBy({
       // shopifyCustomerId,
-      email
+      email,
     });
 
     const queryRunner = this.connection.createQueryRunner();
@@ -425,12 +435,12 @@ export class ShopifyService {
       let customer;
 
       if (currentCustomer) {
-        customer = Object.assign(new UserEntity, currentCustomer, data);
+        customer = Object.assign(new UserEntity(), currentCustomer, data);
         this.logger.log(
           `[SHOPIFY][UPDATE_CUSTOMER]: shopifyCustomerId: ${shopifyCustomerId}`,
         );
       } else {
-        customer = Object.assign(new UserEntity, data);
+        customer = Object.assign(new UserEntity(), data);
         this.logger.log(
           `[SHOPIFY][CREATE_CUSTOMER]: shopifyCustomerId: ${shopifyCustomerId}`,
         );
@@ -454,7 +464,7 @@ export class ShopifyService {
   private async fetchCustomer(query?: string) {
     const axiosInstance = await this.createAxiosInstance();
     const fetchCustomer = await axiosInstance({
-      url: `/admin/api/2024-10/customers.json`,
+      url: `/admin/api/2024-10/customers.json?${query || ''}`,
       method: 'GET',
     });
 

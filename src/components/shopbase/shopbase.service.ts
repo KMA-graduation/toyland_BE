@@ -10,6 +10,9 @@ import { ResponseCodeEnum } from '@enums/response-code.enum';
 import { ProductImageEntity } from '@entities/product-image.entity';
 import { decode } from 'he';
 import { VND_TO_USD } from '@utils/common';
+import { UserEntity } from '@entities/user.entity';
+import { OrderEntity } from '@entities/order.entity';
+import { OrderDetailEntity } from '@entities/order-detail.entity';
 
 @Injectable()
 export class ShopBaseService {
@@ -21,6 +24,15 @@ export class ShopBaseService {
 
     @InjectRepository(ProductImageEntity)
     private readonly productImageRepository: Repository<ProductImageEntity>,
+
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
+
+    @InjectRepository(OrderEntity)
+    private readonly orderRepository: Repository<OrderEntity>,
+
+    @InjectRepository(OrderDetailEntity)
+    private readonly orderDetailRepository: Repository<OrderDetailEntity>,
 
     @InjectDataSource()
     private readonly connection: DataSource,
@@ -52,6 +64,58 @@ export class ShopBaseService {
     };
 
     return await axios.default.get(url, options);
+  }
+
+  private async fetchCustomer(query?: string) {
+    const shop = process.env.SHOP_BASE_NAME;
+    const key = process.env.SHOP_BASE_KEY;
+    const password = process.env.SHOP_BASE_PASSWORD;
+    const token = this.base64Encode(`${key}:${password}`);
+    const url = `https://${shop}.onshopbase.com/admin/customers.json${
+      query ? `?${query}` : ''
+    }`;
+
+    const headers = {
+      Authorization: `Basic ${token}`,
+    };
+
+    const options = {
+      url,
+      method: 'GET',
+      headers,
+      json: true,
+    };
+
+    const response = await axios.default.get(url, options);
+
+    return response?.data?.customers;
+  }
+
+  private async fetchDraftOrder(query?: string) {
+    //shop-name.onshopbase.com/admin/draft_orders.json
+    const shop = process.env.SHOP_BASE_NAME;
+    const key = process.env.SHOP_BASE_KEY;
+    const password = process.env.SHOP_BASE_PASSWORD;
+    const token = this.base64Encode(`${key}:${password}`);
+    const url = `https://${shop}.onshopbase.com/admin/draft_orders.json?${
+      query ? `?${query}` : ''
+    }`;
+    const headers = {
+      Authorization: `Basic ${token}`,
+    };
+
+    const options = {
+      url,
+      method: 'POST',
+      headers,
+      json: true,
+    };
+
+    const response = await axios.default.get(url, options);
+
+    console.log('🚀 [LOGGER] response:', response.data);
+
+    return response?.data?.draft_orders;
   }
 
   private mapProducts(products: Array<any>) {
@@ -193,5 +257,89 @@ export class ShopBaseService {
         .withMessage('Đồng bộ thất bại')
         .build();
     }
+  }
+
+  public async syncCusomer() {
+    try {
+      const customers = await this.fetchCustomer();
+      const mappedCustomers = this.mapCustomers(customers);
+
+      await Promise.all(
+        mappedCustomers.map((customer) => this.upsertCustomer(customer)),
+      );
+    } catch (error) {
+      this.logger.error('[SHOPBASE][SYNC_CUSOMTER][ERROR]: ', error);
+
+      return new ResponseBuilder()
+        .withCode(ResponseCodeEnum.BAD_REQUEST)
+        .withMessage('Đồng bộ thất bại')
+        .build();
+    }
+  }
+
+  public async syncDraftOrder() {
+    try {
+      const drafOrders = await this.fetchDraftOrder();
+      console.log('🚀 [LOGGER] drafOrders:', drafOrders);
+    } catch (error) {
+      console.log('🚀 [LOGGER] error:', error);
+    }
+  }
+
+  private async upsertCustomer(data: {
+    shopbaseCustomerId: string;
+    email: string;
+    username: string;
+  }) {
+    const { shopbaseCustomerId, email } = data;
+
+    const currentCustomer = await this.userRepository.findOneBy({
+      email,
+    });
+
+    const queryRunner = this.connection.createQueryRunner();
+    await queryRunner.startTransaction();
+
+    try {
+      let customer;
+
+      if (currentCustomer) {
+        customer = Object.assign(new UserEntity(), currentCustomer, data);
+        this.logger.log(
+          `[SHOPBASE][UPDATE_CUSTOMER]: shopbaseCustomerId: ${shopbaseCustomerId}`,
+        );
+      } else {
+        customer = Object.assign(new UserEntity(), data);
+        this.logger.log(
+          `[SHOPBASE][CREATE_CUSTOMER]: shopbaseCustomerId: ${shopbaseCustomerId}`,
+        );
+      }
+
+      await queryRunner.manager.save(customer);
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+
+      return new ResponseBuilder()
+        .withCode(ResponseCodeEnum.SERVER_ERROR)
+        .withMessage(error.message)
+        .build();
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  private mapCustomers(customers: any[]) {
+    const mappedCustomers = customers.map(
+      ({ email, first_name, last_name, id }) => {
+        return {
+          shopbaseCustomerId: `${id}`,
+          email,
+          username: `${first_name || ''} ${last_name || ''}`,
+        };
+      },
+    );
+
+    return mappedCustomers;
   }
 }
