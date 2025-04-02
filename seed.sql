@@ -4,6 +4,7 @@ INSERT INTO "public"."branches" ("id", "name", "slug", "logo", "is_active", "cre
 INSERT INTO "public"."branches" ("id", "name", "slug", "logo", "is_active", "created_at", "updated_at") VALUES (3, 'Xiaomi', 'xiaomi', NULL, 't', '2024-04-24 15:19:20.172076+00', '2024-04-24 15:19:20.172076+00');
 INSERT INTO "public"."branches" ("id", "name", "slug", "logo", "is_active", "created_at", "updated_at") VALUES (4, 'Garmin', 'garmin', NULL, 't', '2024-04-24 15:19:27.160093+00', '2024-04-24 15:19:27.160093+00');
 INSERT INTO "public"."branches" ("id", "name", "slug", "logo", "is_active", "created_at", "updated_at") VALUES (5, 'Amazfit', 'amazfit', NULL, 't', '2024-04-24 15:19:39.86952+00', '2024-04-24 15:19:39.86952+00');
+INSERT INTO "public"."branches" ("id", "name", "slug", "logo", "is_active", "created_at", "updated_at") VALUES (6, 'Other', 'other', NULL, 't', '2024-04-24 15:19:39.86952+00', '2024-04-24 15:19:39.86952+00');
 COMMIT;
 
 BEGIN;

@@ -102,7 +102,7 @@ export class ShopifyService {
 
     try {
       const existedProduct = await this.productRepository.findOneBy({
-        shopifyId: data.shopify_id,
+        shopifyId: Not(IsNull()),
         name: data?.title,
       });
 
@@ -132,6 +132,7 @@ export class ShopifyService {
           price: data?.variants?.[0]?.price,
           stockAmount: data?.variants?.[0]?.inventory_quantity || 0,
           categoryId: 6,
+          branchId: 6,
         });
 
         this.logger.log(
@@ -232,7 +233,7 @@ export class ShopifyService {
       const [users, products, systemOrders] = await Promise.all([
         this.userRepository.findBy({
           shopifyCustomerId: Not(IsNull()),
-          source: 'shopify',
+          // source: 'shopify',
         }),
         this.productRepository.findBy({
           shopifyId: Not(IsNull()),
@@ -252,13 +253,13 @@ export class ShopifyService {
           line_items = [],
           shipping_address,
 
-          current_total_price,
+          total_price,
           financial_status,
           fulfillment_status,
           status,
           id: shopifyOrderId,
         } = order;
-
+        
         const {
           first_name,
           last_name,
@@ -268,7 +269,7 @@ export class ShopifyService {
           address1,
           address2,
         } = shipping_address;
-
+        
         const totalAmount = line_items.reduce(
           (acc, { quantity }) => acc + quantity,
           0,
@@ -296,7 +297,7 @@ export class ShopifyService {
         orderEntity.status = status || financial_status;
         orderEntity.financialStatus = financial_status;
         orderEntity.fulfillmentStatus = fulfillment_status;
-        orderEntity.totalPrice = Number(current_total_price);
+        orderEntity.totalPrice = Number(total_price);
         orderEntity.totalAmount = totalAmount;
         orderEntity.paymentType = 'shopify_payment';
         orderEntity.receiver = `${first_name} ${last_name}`;
@@ -344,7 +345,7 @@ export class ShopifyService {
   private async fetchOrder() {
     const axiosInstance = await this.createAxiosInstance();
     const fetchOrder = await axiosInstance({
-      url: `/admin/api/2024-10/orders.json?status=any`,
+      url: `/admin/api/2024-10/orders.json`,
       method: 'GET',
     });
 
@@ -440,7 +441,11 @@ export class ShopifyService {
           `[SHOPIFY][UPDATE_CUSTOMER]: shopifyCustomerId: ${shopifyCustomerId}`,
         );
       } else {
-        customer = Object.assign(new UserEntity(), data);
+        customer = Object.assign(new UserEntity(), {
+          ...data,
+          gender: "other",
+
+        });
         this.logger.log(
           `[SHOPIFY][CREATE_CUSTOMER]: shopifyCustomerId: ${shopifyCustomerId}`,
         );
