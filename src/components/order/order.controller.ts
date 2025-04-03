@@ -23,8 +23,6 @@ import { ChangeStatusOrder } from './dto/request/change-status.dto';
 import { Auth } from '@decorators/auth.decorator';
 import { AuthType } from '@enums/auth.enum';
 import { CreatePaymentDto } from './dto/request/create-payment.dto';
-import { Roles } from '@decorators/roles.decorator';
-import { RoleEnum } from '@enums/role.enum';
 import { DeleteProductDto } from './dto/request/delete.product.dto';
 
 @Controller('orders')

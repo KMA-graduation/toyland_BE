@@ -87,6 +87,60 @@ export class ShopifyService {
     return fetchProduct?.data?.products;
   }
 
+  public async updateInventoryQuantityShopifyProduct(
+    shopifyProductId: number,
+    inventoryQuantity: number
+  ) {
+    try {
+      const axiosInstance = await this.createAxiosInstance();
+  
+      // 1️⃣ Fetch product details to get the variant ID
+      const productResponse = await axiosInstance.get(
+        `/admin/api/2024-01/products/${shopifyProductId}.json`
+      );
+      const product = productResponse.data.product;
+  
+      if (!product || !product.variants || product.variants.length === 0) {
+        throw new Error('No variants found for this product');
+      }
+  
+      const variantId = product.variants[0].id;
+      const inventoryItemId = product.variants[0].inventory_item_id;
+  
+      // 2️⃣ Get the Inventory Level (Location ID)
+      const locationsResponse = await axiosInstance.get(
+        `/admin/api/2024-01/locations.json`
+      );
+      const locations = locationsResponse.data.locations;
+  
+      if (!locations || locations.length === 0) {
+        throw new Error('No locations found in Shopify store');
+      }
+  
+      const locationId = locations[0].id; // Assume first location is the one to update
+  
+      // 3️⃣ Update inventory quantity using Inventory API
+      const inventoryUpdateResponse = await axiosInstance.post(
+        `/admin/api/2024-01/inventory_levels/set.json`,
+        {
+          location_id: locationId,
+          inventory_item_id: inventoryItemId,
+          available: inventoryQuantity,
+        }
+      );
+  
+      console.log('🚀 [LOGGER] Inventory updated:', inventoryUpdateResponse.data);
+      return inventoryUpdateResponse.data;
+    } catch (error) {
+      this.logger.error(
+        `[SHOPIFY][UPDATE_INVENTORY]: Error updating inventory for product ${shopifyProductId}`,
+        error
+      );
+      throw new Error(error.response?.data?.errors || 'Failed to update inventory');
+    }
+  }
+  
+
   private mapProducts(products: Array<any>) {
     if (isEmpty(products)) return [];
 
@@ -133,6 +187,7 @@ export class ShopifyService {
           stockAmount: data?.variants?.[0]?.inventory_quantity || 0,
           categoryId: 6,
           branchId: 6,
+          sold: 0,
         });
 
         this.logger.log(

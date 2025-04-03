@@ -8,6 +8,7 @@ import { ProductEntity } from '@entities/product.entity';
 import { DiscountEntity } from '@entities/discount.entity';
 import { ConfigModule } from '@nestjs/config';
 import { ProductImageEntity } from '@entities/product-image.entity';
+import { ShopifyModule } from '@components/shopify/shopify.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ProductImageEntity } from '@entities/product-image.entity';
       DiscountEntity,
     ]),
     ConfigModule,
+    ShopifyModule
   ],
   controllers: [OrderController],
   providers: [OrderService],

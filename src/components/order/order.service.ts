@@ -30,6 +30,7 @@ import { ChangeStatusOrder } from './dto/request/change-status.dto';
 import { CreatePaymentDto } from './dto/request/create-payment.dto';
 import { getKeyByObject } from '@utils/common';
 import { DeleteProductDto } from './dto/request/delete.product.dto';
+import { ShopifyService } from '@components/shopify/shopify.service';
 
 @Injectable()
 export class OrderService {
@@ -48,6 +49,8 @@ export class OrderService {
 
     @InjectRepository(DiscountEntity)
     private readonly discountRepository: Repository<DiscountEntity>,
+
+    private readonly shopifyService: ShopifyService,
 
     private readonly configService: ConfigService,
 
@@ -91,6 +94,7 @@ export class OrderService {
     const products = await this.productRepository.findBy({
       id: In(productIds),
     });
+    const serializedProducts = keyBy(products, 'id');
 
     if (productIds.length !== products.length) {
       return new ApiError(
@@ -109,13 +113,23 @@ export class OrderService {
     try {
       const order = await queryRunner.manager.save(orderEntity);
       const orderDetail = request.products.map((product) =>
-        this.orderDetailRepository.create({
-          productId: product.id,
-          amount: product.amount,
-          orderId: order.id,
-          size: product?.size,
-          isRating: false,
-        }),
+       {
+          const actualProduct = serializedProducts[product.id];
+          if (actualProduct.stockAmount < product.amount) {
+            throw new ApiError(
+              ResponseCodeEnum.BAD_REQUEST,
+              ResponseMessageEnum.INVALID_QUANTITY,
+            );
+          }
+
+          return  this.orderDetailRepository.create({
+            productId: product.id,
+            amount: product.amount,
+            orderId: order.id,
+            size: product?.size,
+            isRating: false,
+          })
+       }
       );
 
       await queryRunner.manager.save(orderDetail);
@@ -324,6 +338,7 @@ export class OrderService {
     const products = await this.productRepository.findBy({
       id: In(productIds),
     });
+    const serializedProducts = keyBy(products, 'id');
 
     if (products.length !== productIds.length) {
       return new ApiError(
@@ -340,6 +355,13 @@ export class OrderService {
       const orderDetailEntities = await Bluebird.mapSeries(
         request.products,
         async (product) => {
+          const actualProduct = serializedProducts[product.id];
+          if (actualProduct.stockAmount < product.amount) {
+            throw new ApiError(
+              ResponseCodeEnum.BAD_REQUEST,
+              ResponseMessageEnum.INVALID_QUANTITY,
+            );
+          }
           const orderDetail = new OrderDetailEntity();
           orderDetail.productId = product.id;
           orderDetail.orderId = oldOrderInCart.id;
@@ -505,7 +527,7 @@ export class OrderService {
     }
 
     const productInvalid = [];
-    products.forEach((product) => {
+    products.forEach(async (product) => {
       const detail = serializedOrderDetails[product.id];
       const isOutStock = detail.amount > product.stockAmount;
       serializedOrderDetails[product.id].unitPrice = product.price;
@@ -513,6 +535,10 @@ export class OrderService {
       if (!isOutStock) {
         product['stockAmount'] -= detail.amount
         product['sold'] += detail.amount
+        
+        if (product.shopifyId) {
+          await this.shopifyService.updateInventoryQuantityShopifyProduct(product.shopifyId, product.stockAmount);
+        }
       }      
 
       if (isOutStock) {
@@ -796,6 +822,7 @@ export class OrderService {
           });
         } else {
           product['stockAmount'] -= detail.amount;
+          product['sold'] += detail.amount;
         }
       });
 

@@ -22,5 +22,6 @@ import { OrderDetailEntity } from '@entities/order-detail.entity';
   ],
   controllers: [ShopifyController],
   providers: [ShopifyService],
+  exports: [ShopifyService],
 })
 export class ShopifyModule {}
