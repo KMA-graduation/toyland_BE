@@ -25,18 +25,22 @@ export class CreateUserDto {
   @IsNotEmpty()
   readonly password: string;
 
-   @IsString()
-    @IsNotEmpty()
-    @IsEnum(GenderEnum)
-    readonly gender: string;
-  
-    @IsString()
-    @IsOptional()
-    readonly address?: string;
-  
-    @IsDateString()
-    @IsOptional()
-    birth?: Date;
+  @IsString()
+  @IsNotEmpty()
+  @IsEnum(GenderEnum)
+  readonly gender: string;
+
+  @IsString()
+  @IsOptional()
+  readonly address?: string;
+
+  @IsString()
+  @IsOptional()
+  readonly phoneNumber?: string;
+
+  @IsDateString()
+  @IsOptional()
+  birth?: Date;
 
   @IsString()
   @IsOptional()

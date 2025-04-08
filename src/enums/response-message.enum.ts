@@ -47,4 +47,5 @@ export enum ResponseMessageEnum {
   VNPAY_99 = 'Giao dịch thất bại',
 
   PRODUCT_NOT_FOUND = 'Sản phẩm không tồn tại',
+  PHONE_NUMBER_EXISTS = 'Đã tồn tại số điện thoại',
 }

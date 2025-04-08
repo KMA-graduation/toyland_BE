@@ -89,6 +89,21 @@ export class UserService {
     const user = await this.getUserExist(id);
     if (!user) throw new NotFoundException(ResponseMessageEnum.INVALID_USER);
 
+    const phoneNumber = request?.phoneNumber;
+    if (phoneNumber) {
+      const existUserByPhoneNumber = await this.userRepository.findOne({
+        where: {
+          phoneNumber: request.phoneNumber,
+        }
+      });
+
+      if (existUserByPhoneNumber && existUserByPhoneNumber.id !== id) {
+        throw new BadRequestException(ResponseMessageEnum.PHONE_NUMBER_EXISTS);
+      }
+    }
+
+    
+
     for (const key in request) {
       if (key !== 'id') user[key] = request[key];
     }

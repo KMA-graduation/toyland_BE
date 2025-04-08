@@ -109,3 +109,16 @@ export function sumByKeys(
 
   return isKeyBy ? keyBy(result, 'key') : result;
 }
+
+export const convertToLocalPhoneNumber = (phoneNumber: string) => {
+  if (phoneNumber.startsWith('0')) {
+    return phoneNumber;
+  }
+  if (phoneNumber.startsWith('+84')) {
+    return '0' + phoneNumber.slice(3);
+  }
+  if (phoneNumber.startsWith('84')) {
+    return '0' + phoneNumber.slice(2);
+  }
+  return phoneNumber;
+}

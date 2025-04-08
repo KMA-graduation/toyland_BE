@@ -5,11 +5,13 @@ import {
   CreateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 
 @Entity('users')
+@Unique(['email', "phoneNumber"])
 export class UserEntity {
   @PrimaryGeneratedColumn('increment')
   id: number;
@@ -27,6 +29,11 @@ export class UserEntity {
     default: 0,
   })
   role: number;
+
+  @Column({
+    nullable: true,
+  })
+  phoneNumber: string;
 
   @Column({
     default: true,

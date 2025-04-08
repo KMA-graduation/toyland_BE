@@ -1,3 +1,4 @@
+import * as bcrypt from 'bcrypt';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, IsNull, Not, Repository } from 'typeorm';
@@ -17,6 +18,7 @@ import { OrderDetailEntity } from '@entities/order-detail.entity';
 import { CronExpression } from '@nestjs/schedule';
 import * as cron from 'node-cron';
 import { UpdateCronJobDto } from './dto/update-cronjob.dto';
+import { convertToLocalPhoneNumber } from '@utils/common';
 
 @Injectable()
 export class ShopifyService {
@@ -425,10 +427,9 @@ export class ShopifyService {
 
       const timestamp = new Date().getTime();
       this.logger.log(`[SHOPIFY][SYNC_CUSTOMER][START]`);
-      do {
+      // do {
         const query = this.queryString(updatedAtMin, limit, sinceId);
         customers = await this.fetchCustomer(query);
-        console.log('🚀 [LOGGER] customers:', customers.length);
         if (customers.length) {
           sinceId = customers.at(-1).id;
         }
@@ -438,7 +439,7 @@ export class ShopifyService {
         for (const customer of mappedCustomers) {
           await this.upsertCustomer(customer);
         }
-      } while (customers.length);
+      // } while (customers.length);
 
       this.logger.log(
         `[SHOPIFY][SYNC_CUSOMTER][END]: ${new Date().getTime() - timestamp} ms`,
@@ -460,11 +461,13 @@ export class ShopifyService {
 
   private mapCustomers(customers: ShopifyCustomer[]) {
     const mappedCustomers = customers.map(
-      ({ email, first_name, last_name, id }) => {
+      ({ email, first_name, last_name, id, phone }) => {
+        
         return {
           shopifyCustomerId: `${id}`,
           email,
           username: `${first_name || ''} ${last_name || ''}`,
+          phone: convertToLocalPhoneNumber(phone),
         };
       },
     );
@@ -476,13 +479,19 @@ export class ShopifyService {
     shopifyCustomerId: string;
     email: string;
     username: string;
+    phone: string
   }) {
-    const { shopifyCustomerId, email } = data;
+    const { shopifyCustomerId, email, phone, username } = data;
 
-    const currentCustomer = await this.userRepository.findOneBy({
-      // shopifyCustomerId,
-      email,
-    });
+    const [currentCustomerFindByPhone, currentCustomerFindByEmail] = await Promise.all([
+      this.userRepository.findOneBy({
+        phoneNumber: phone,
+      }),
+      this.userRepository.findOneBy({
+        email,
+      }),
+
+    ]);
 
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.startTransaction();
@@ -490,23 +499,34 @@ export class ShopifyService {
     try {
       let customer;
 
-      if (currentCustomer) {
-        customer = Object.assign(new UserEntity(), currentCustomer, data);
+      if (currentCustomerFindByPhone) {
+        customer = Object.assign(new UserEntity(), currentCustomerFindByPhone, {
+          shopifyCustomerId,
+          username,
+          email: currentCustomerFindByPhone.email,
+          phoneNumber: phone,
+        });
         this.logger.log(
           `[SHOPIFY][UPDATE_CUSTOMER]: shopifyCustomerId: ${shopifyCustomerId}`,
         );
-      } else {
+        await queryRunner.manager.save(customer);
+      }
+      else if (!currentCustomerFindByEmail && !currentCustomerFindByPhone) {
+        const newPassword = await bcrypt.hash(phone, 7)
         customer = Object.assign(new UserEntity(), {
-          ...data,
+          shopifyCustomerId,
+          username,
+          email,
+          phoneNumber: phone,
           gender: "other",
-
+          password: newPassword,
         });
         this.logger.log(
           `[SHOPIFY][CREATE_CUSTOMER]: shopifyCustomerId: ${shopifyCustomerId}`,
         );
+        await queryRunner.manager.save(customer);
       }
 
-      await queryRunner.manager.save(customer);
       await queryRunner.commitTransaction();
     } catch (error) {
       console.log('🚀 [LOGGER] error:', error);
@@ -524,7 +544,7 @@ export class ShopifyService {
   private async fetchCustomer(query?: string) {
     const axiosInstance = await this.createAxiosInstance();
     const fetchCustomer = await axiosInstance({
-      url: `/admin/api/2024-10/customers.json?${query || ''}`,
+      url: `/admin/api/2024-10/customers.json`,
       method: 'GET',
     });
 

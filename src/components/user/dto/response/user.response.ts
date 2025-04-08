@@ -14,6 +14,9 @@ export class UserResponse {
   username: string;
 
   @Expose()
+  phoneNumber: string;
+
+  @Expose()
   gender: number;
 
   @Expose()
