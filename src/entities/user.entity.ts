@@ -1,6 +1,4 @@
 import {
-  BeforeInsert,
-  BeforeUpdate,
   Column,
   CreateDateColumn,
   Entity,
@@ -8,7 +6,6 @@ import {
   Unique,
   UpdateDateColumn,
 } from 'typeorm';
-import * as bcrypt from 'bcryptjs';
 
 @Entity('users')
 @Unique(['email', "phoneNumber"])
@@ -76,12 +73,12 @@ export class UserEntity {
   })
   updatedAt: Date;
 
-  @BeforeInsert()
-  @BeforeUpdate()
-  hashPassword() {
-    if (this.password) {
-      const salt = bcrypt.genSaltSync(10);
-      this.password = bcrypt.hashSync(this.password, salt);
-    }
-  }
+  // @BeforeInsert()
+  // @BeforeUpdate()
+  // hashPassword() {
+  //   if (this.password) {
+  //     const salt = bcrypt.genSaltSync(10);
+  //     this.password = bcrypt.hashSync(this.password, salt);
+  //   }
+  // }
 }
