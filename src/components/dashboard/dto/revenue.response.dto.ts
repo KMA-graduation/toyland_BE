@@ -2,17 +2,8 @@
 import { Expose, Type } from 'class-transformer';
 
 class RevenueByMonthOfYear {
-  @Expose()
-  month: number;
-
-  @Expose()
-  year: number;
-
-  @Expose()
-  revenue: number;
-
-  @Expose()
-  monthYear: string;
+ @Expose()
+ label: string;
 
   @Expose()
   totalPrice: number;
