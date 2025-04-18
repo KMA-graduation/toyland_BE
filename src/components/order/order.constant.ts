@@ -9,6 +9,11 @@ export enum OrderStatus {
   REJECT = 'reject',
 }
 
+export enum OrderShopifyStatus {
+  PAID = 'paid',
+  PENDING = 'pending',
+}
+
 export enum IsMe {
   No,
   Yes,

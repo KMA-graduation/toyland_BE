@@ -6,7 +6,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 
-import { OrderStatus } from '@components/order/order.constant';
+import { OrderShopifyStatus, OrderStatus } from '@components/order/order.constant';
 import { OrderDetailEntity } from '@entities/order-detail.entity';
 import { OrderEntity } from '@entities/order.entity';
 import { ProductEntity } from '@entities/product.entity';
@@ -43,6 +43,8 @@ export class DashboardService {
         'o.id AS id',
         'o.status AS status',
         'o.updated_at AS "updatedAt"',
+        'o.shopify_order_id AS "shopifyOrderId"',
+        'o.shopbase_order_id AS "shopbaseOrderId"',
         '(o.total_price)::float AS "totalPrice"',
         `CASE WHEN COUNT(od) = 0 THEN '[]' ELSE JSON_AGG(DISTINCT JSONB_BUILD_OBJECT(
           'orderId', od.order_id,
@@ -52,7 +54,7 @@ export class DashboardService {
         )) END AS "orderDetails"`,
       ])
       .leftJoin(OrderDetailEntity, 'od', 'od.order_id = o.id')
-      .where('o.status = :status', { status: OrderStatus.SUCCESS });
+      .where('o.status IN (:...statuses)', { statuses: [OrderStatus.SUCCESS, OrderShopifyStatus.PAID] })
   
     if (monthFilter && yearFilter) {
       query
@@ -73,8 +75,19 @@ export class DashboardService {
     }
   
     const orders = await query.groupBy('o.id').getRawMany();
+
+    // Calculate total price (sum of all orders, sum of order from shopify and shopbase)
+    const totalShopifyPrice = sumBy(orders, (order) =>
+      order.shopifyOrderId ? Number(order.totalPrice) : 0,
+    );
+    const totalShopbasePrice = sumBy(orders, (order) =>
+      order.shopbaseOrderId ? Number(order.totalPrice) : 0,
+    );
     const totalPrice = sumBy(orders, (order) => Number(order.totalPrice));
   
+    console.log('orders', orders);
+    
+
     // Generate chart data
     let chartData: { label: string; totalPrice: number }[] = [];
   
@@ -117,6 +130,7 @@ export class DashboardService {
       }
     }
   
+    // Get product details
     const productDetails = await this.orderDetailRepository
       .createQueryBuilder('od')
       .select([
@@ -139,6 +153,8 @@ export class DashboardService {
     const response = plainToInstance(
       RevenueResponseDto,
       {
+        totalShopifyPrice,
+        totalShopbasePrice,
         revenue: totalPrice,
         revenueByMonthOfYear: chartData,
         producs: productDetailMap,
