@@ -41,4 +41,8 @@ export class PaginationQuery {
   @IsString()
   @IsOptional()
   sort?: string;
+
+  @IsString()
+  @IsOptional()
+  source?: number;
 }

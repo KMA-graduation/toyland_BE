@@ -16,7 +16,7 @@ import { CloudinaryService } from '@components/cloudinary/cloudinary.service';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import * as Bluebird from 'bluebird';
-import { PRODUCT_UPLOAD_PATH } from './product.constant';
+import { PRODUCT_UPLOAD_PATH, SOURCE_PRODUCT_ENUM } from './product.constant';
 import { unlink } from '@utils/file';
 import { escapeCharForSearch } from '@utils/common';
 import { FavoriteEntity } from '@entities/favorite.entity';
@@ -124,7 +124,7 @@ export class ProductService {
   }
 
   async findAll(request: PaginationQuery) {
-    const { page, take, skip, category, sort, keyword } = request;
+    const { page, take, skip, category, source, sort, keyword } = request;
 
     const query = this.productRepository
       .createQueryBuilder('p')
@@ -164,6 +164,19 @@ export class ProductService {
 
     if (category) {
       query.andWhere('p.category_id = :category', { category });
+    }
+    if (source) {
+      switch (+source) {
+        case SOURCE_PRODUCT_ENUM.LOCAL:
+          query.andWhere('p.shopify_id IS NULL AND p.shop_base_id IS NULL');
+          break;
+        case SOURCE_PRODUCT_ENUM.SHOPIFY:
+          query.andWhere('p.shopify_id IS NOT NULL');
+          break;
+        case SOURCE_PRODUCT_ENUM.SHOPBASE:
+          query.andWhere('p.shop_base_id IS NOT NULL');
+          break;
+      }
     }
 
     if (sort) {

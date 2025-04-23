@@ -14,3 +14,12 @@ export const PRODUCT_UPLOAD_FILE_TYPES = [
   'image/webp',
   'image/avif',
 ];
+
+
+// type source product
+export const SOURCE_PRODUCT_ENUM = {
+  ALL: 1,
+  LOCAL: 2,
+  SHOPIFY: 3,
+  SHOPBASE: 4,
+};
