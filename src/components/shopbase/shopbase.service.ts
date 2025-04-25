@@ -1,3 +1,4 @@
+import * as bcrypt from 'bcrypt';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, IsNull, Not, Repository } from 'typeorm';
@@ -9,7 +10,7 @@ import { ResponseBuilder } from '@utils/response-builder';
 import { ResponseCodeEnum } from '@enums/response-code.enum';
 import { ProductImageEntity } from '@entities/product-image.entity';
 import { decode } from 'he';
-import { VND_TO_USD } from '@utils/common';
+import { convertToLocalPhoneNumber, VND_TO_USD } from '@utils/common';
 import { UserEntity } from '@entities/user.entity';
 import { OrderEntity } from '@entities/order.entity';
 import { OrderDetailEntity } from '@entities/order-detail.entity';
@@ -145,60 +146,69 @@ export class ShopBaseService {
   private async upsertProduct(data: any) {
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.startTransaction();
-
+  
     try {
       const existedProduct = await this.productRepository.findOneBy({
         shopBaseId: data.shop_base_id,
       });
-
-      const product = new ProductEntity();
+  
+      let product: ProductEntity;
       const decodeDescription = decode(data?.body_html);
-      product.shopBaseId = data?.shop_base_id;
-      product.name = data?.title;
-      product.description = decodeDescription.replace(/<[^>]+>/g, '');
-
+      const plainDescription = decodeDescription.replace(/<[^>]+>/g, '');
       const price = data?.variants?.[0]?.price || 0;
-      product.price = price * VND_TO_USD;
-
       const stockAmountShopBase = data?.variants?.[0]?.inventory_quantity || 0;
-      product.stockAmount = stockAmountShopBase;
-
+  
       if (existedProduct) {
-        product.id = existedProduct.id;
-
-        if (Number(stockAmountShopBase) > existedProduct.stockAmount) {
-          product.stockAmount = existedProduct.stockAmount;
-        }
-
-        await queryRunner.manager.delete(ProductImageEntity, {
-          productId: existedProduct.id,
+        product = Object.assign(new ProductEntity(), existedProduct, {
+          name: data?.title ?? existedProduct.name,
+          description: plainDescription || existedProduct.description,
+          price: price * VND_TO_USD || existedProduct.price,
+          stockAmount:
+            stockAmountShopBase > existedProduct.stockAmount
+              ? stockAmountShopBase
+              : existedProduct.stockAmount,
         });
-
+  
         this.logger.log(
           `[SHOP_BASE][UPDATE_PRODUCT]: shop_base_id: ${data.shop_base_id}`,
         );
+  
+        await queryRunner.manager.delete(ProductImageEntity, {
+          productId: existedProduct.id,
+        });
       } else {
+        product = Object.assign(new ProductEntity(), {
+          shopBaseId: data?.shop_base_id,
+          name: data?.title,
+          description: plainDescription,
+          price: price * VND_TO_USD,
+          stockAmount: stockAmountShopBase,
+          categoryId: 6,
+          branchId: 6,
+          sold: 0,
+        });
+  
         this.logger.log(
-          `[SHOP_BASE][CREATE_PRODUCT]: shop_base_id${data.shop_base_id}`,
+          `[SHOP_BASE][CREATE_PRODUCT]: shop_base_id: ${data.shop_base_id}`,
         );
       }
-
+  
       const result = await queryRunner.manager.save(product);
-
+  
       const productImages = data?.images?.map((image) => {
         const productImage = new ProductImageEntity();
-        productImage['productId'] = result.id;
-        productImage['url'] = image.src;
-
+        productImage.productId = result.id;
+        productImage.url = image.src;
         return productImage;
       });
-
+  
       await queryRunner.manager.save(productImages);
+  
       await queryRunner.commitTransaction();
     } catch (error) {
-      console.error('[SHOP_BASE][CREATE_PRODUCT][ERROR]:', { error });
+      this.logger.error(`[SHOP_BASE][CREATE_PRODUCT][ERROR]:`, error);
       await queryRunner.rollbackTransaction();
-
+  
       return new ResponseBuilder()
         .withCode(ResponseCodeEnum.SERVER_ERROR)
         .withMessage(error.message)
@@ -207,6 +217,7 @@ export class ShopBaseService {
       await queryRunner.release();
     }
   }
+  
 
   public async syncProduct() {
     try {
@@ -290,36 +301,58 @@ export class ShopBaseService {
     shopbaseCustomerId: string;
     email: string;
     username: string;
+    phone: string;
   }) {
-    const { shopbaseCustomerId, email } = data;
-
-    const currentCustomer = await this.userRepository.findOneBy({
-      email,
-    });
-
+    const { shopbaseCustomerId, email, phone, username } = data;
+  
+    const [currentCustomerFindByPhone, currentCustomerFindByEmail] = await Promise.all([
+      this.userRepository.findOneBy({ phoneNumber: phone }),
+      this.userRepository.findOneBy({ email }),
+    ]);
+  
     const queryRunner = this.connection.createQueryRunner();
     await queryRunner.startTransaction();
-
+  
     try {
-      let customer;
-
-      if (currentCustomer) {
-        customer = Object.assign(new UserEntity(), currentCustomer, data);
+      let customer: UserEntity;
+  
+      if (currentCustomerFindByPhone) {
+        customer = Object.assign(new UserEntity(), currentCustomerFindByPhone, {
+          shopbaseCustomerId,
+          username,
+          email: currentCustomerFindByPhone.email,
+          phoneNumber: phone,
+        });
+  
         this.logger.log(
           `[SHOPBASE][UPDATE_CUSTOMER]: shopbaseCustomerId: ${shopbaseCustomerId}`,
         );
-      } else {
-        customer = Object.assign(new UserEntity(), data);
+  
+        await queryRunner.manager.save(customer);
+      } else if (!currentCustomerFindByEmail && !currentCustomerFindByPhone) {
+        const newPassword = await bcrypt.hash(phone, 7);
+  
+        customer = Object.assign(new UserEntity(), {
+          shopbaseCustomerId,
+          username,
+          email,
+          phoneNumber: phone,
+          gender: 'other',
+          password: newPassword,
+        });
+  
         this.logger.log(
           `[SHOPBASE][CREATE_CUSTOMER]: shopbaseCustomerId: ${shopbaseCustomerId}`,
         );
+  
+        await queryRunner.manager.save(customer);
       }
-
-      await queryRunner.manager.save(customer);
+  
       await queryRunner.commitTransaction();
     } catch (error) {
+      this.logger.error(`[SHOPBASE][UPSERT_CUSTOMER][ERROR]:`, error);
       await queryRunner.rollbackTransaction();
-
+  
       return new ResponseBuilder()
         .withCode(ResponseCodeEnum.SERVER_ERROR)
         .withMessage(error.message)
@@ -328,14 +361,16 @@ export class ShopBaseService {
       await queryRunner.release();
     }
   }
+  
 
   private mapCustomers(customers: any[]) {
     const mappedCustomers = customers.map(
-      ({ email, first_name, last_name, id }) => {
+      ({ email, first_name, last_name, id, phone }) => {
         return {
           shopbaseCustomerId: `${id}`,
           email,
           username: `${first_name || ''} ${last_name || ''}`,
+          phone: convertToLocalPhoneNumber(phone),
         };
       },
     );
