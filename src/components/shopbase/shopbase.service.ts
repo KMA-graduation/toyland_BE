@@ -163,10 +163,7 @@ export class ShopBaseService {
           name: data?.title ?? existedProduct.name,
           description: plainDescription || existedProduct.description,
           price: price * VND_TO_USD || existedProduct.price,
-          stockAmount:
-            stockAmountShopBase > existedProduct.stockAmount
-              ? stockAmountShopBase
-              : existedProduct.stockAmount,
+          stockAmount: stockAmountShopBase,
         });
   
         this.logger.log(
@@ -261,7 +258,7 @@ export class ShopBaseService {
         .withMessage('Đồng bộ thành công')
         .build();
     } catch (error) {
-      this.logger.error('[SHOPIFY_SYNC][ERROR]: ', error);
+      this.logger.error('[SHOP_BASE][ERROR]: ', error);
 
       return new ResponseBuilder()
         .withCode(ResponseCodeEnum.BAD_REQUEST)
@@ -302,9 +299,9 @@ export class ShopBaseService {
     email: string;
     username: string;
     phone: string;
+    address: string;
   }) {
-    const { shopbaseCustomerId, email, phone, username } = data;
-  
+    const { shopbaseCustomerId, email, phone, username, address } = data;
     const [currentCustomerFindByPhone, currentCustomerFindByEmail] = await Promise.all([
       this.userRepository.findOneBy({ phoneNumber: phone }),
       this.userRepository.findOneBy({ email }),
@@ -322,6 +319,7 @@ export class ShopBaseService {
           username,
           email: currentCustomerFindByPhone.email,
           phoneNumber: phone,
+          address: address,
         });
   
         this.logger.log(
@@ -336,6 +334,7 @@ export class ShopBaseService {
           shopbaseCustomerId,
           username,
           email,
+          address,
           phoneNumber: phone,
           gender: 'other',
           password: newPassword,
@@ -365,12 +364,13 @@ export class ShopBaseService {
 
   private mapCustomers(customers: any[]) {
     const mappedCustomers = customers.map(
-      ({ email, first_name, last_name, id, phone }) => {
+      ({ email, first_name, last_name, id, phone, default_address }) => {
         return {
           shopbaseCustomerId: `${id}`,
           email,
           username: `${first_name || ''} ${last_name || ''}`,
           phone: convertToLocalPhoneNumber(phone),
+          address: `${default_address?.address1 || ''} ${default_address?.city || ''} ${default_address?.country || ''}`,
         };
       },
     );

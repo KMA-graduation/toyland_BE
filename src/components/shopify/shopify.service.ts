@@ -166,15 +166,14 @@ export class ShopifyService {
 
       if (existedProduct) {
         const stockAmountShopify = data?.variants?.[0]?.inventory_quantity || 0;
-        const stockAmount = existedProduct.stockAmount;
+        // const stockAmount = existedProduct.stockAmount;
         product = Object.assign(new ProductEntity(), existedProduct, {
           name: data?.title ?? existedProduct.name,
           description:
             data?.body_html?.split(/<\/?[^>]+>/)[1] ||
             existedProduct.description,
           price: data?.variants?.[0]?.price ?? existedProduct.price,
-          stockAmount:
-            stockAmountShopify > stockAmount ? stockAmountShopify : stockAmount,
+          stockAmount: stockAmountShopify,
         });
 
         this.logger.log(
