@@ -19,13 +19,13 @@ export class PaginationQuery {
 
   @Allow()
   @Transform((value) => {
-    return Number(value.value) || 10;
+    return Number(value.value) || 1000;
   })
   limit?: number;
 
   get take(): number {
-    const limit = Number(this.limit) || 10;
-    return limit > 0 && limit <= 100 ? limit : 10;
+    const limit = Number(this.limit) || 1000;
+    return limit > 0 && limit <= 1000 ? limit : 10;
   }
 
   get skip(): number {

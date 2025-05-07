@@ -356,9 +356,9 @@ export class ShopifyService {
         orderEntity.totalPrice = Number(total_price);
         orderEntity.totalAmount = totalAmount;
         orderEntity.paymentType = 'shopify_payment';
-        orderEntity.receiver = `${first_name} ${last_name}`;
-        orderEntity.phone = phone;
-        orderEntity.address = addressOrder;
+        orderEntity.receiver = `${first_name} ${last_name}` || userMap[customer?.id]?.username;
+        orderEntity.phone = phone || userMap[customer?.id]?.phoneNumber;
+        orderEntity.address = addressOrder || userMap[customer?.id]?.address;
         orderEntity.source = 'shopify';
         orderEntity.shopifyOrderId = order.id.toString();
 
