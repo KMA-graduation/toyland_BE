@@ -519,6 +519,7 @@ export class ShopifyService {
           phoneNumber: phone,
           gender: "other",
           password: newPassword,
+          source: 'shopify',
         });
         this.logger.log(
           `[SHOPIFY][CREATE_CUSTOMER]: shopifyCustomerId: ${shopifyCustomerId}`,

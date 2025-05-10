@@ -28,6 +28,9 @@ class Product {
 
 export class RevenueResponseDto {
   @Expose()
+  totalLocalShopPrice: number;
+  
+  @Expose()
   totalShopifyPrice: number;
   
   @Expose()

@@ -27,6 +27,7 @@ import { AuthType } from '@enums/auth.enum';
 import { Roles } from '@decorators/roles.decorator';
 import { RoleEnum } from '@enums/role.enum';
 import { FileUpload } from './dto/file';
+import { ListProductQuery } from './dto/query/list-product.query';
 
 @Controller('products')
 export class ProductController {
@@ -51,7 +52,7 @@ export class ProductController {
 
   @Get()
   @Auth(AuthType.Public)
-  findAll(@Query() request: PaginationQuery) {
+  findAll(@Query() request: ListProductQuery) {
     return this.productService.findAll(request);
   }
 

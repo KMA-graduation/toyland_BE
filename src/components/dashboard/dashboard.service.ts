@@ -6,7 +6,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 
-import { OrderShopifyStatus, OrderStatus } from '@components/order/order.constant';
+import { OrderShopbaseStatus, OrderShopifyStatus, OrderStatus } from '@components/order/order.constant';
 import { OrderDetailEntity } from '@entities/order-detail.entity';
 import { OrderEntity } from '@entities/order.entity';
 import { ProductEntity } from '@entities/product.entity';
@@ -54,7 +54,7 @@ export class DashboardService {
         )) END AS "orderDetails"`,
       ])
       .leftJoin(OrderDetailEntity, 'od', 'od.order_id = o.id')
-      .where('o.status IN (:...statuses)', { statuses: [OrderStatus.SUCCESS, OrderShopifyStatus.PAID] })
+      .where('o.status IN (:...statuses)', { statuses: [OrderStatus.SUCCESS, OrderShopifyStatus.PAID, OrderShopbaseStatus.INVOICE_SENT, OrderShopbaseStatus.OPEN] })
   
     if (monthFilter && yearFilter) {
       query
@@ -83,11 +83,11 @@ export class DashboardService {
     const totalShopbasePrice = sumBy(orders, (order) =>
       order.shopbaseOrderId ? Number(order.totalPrice) : 0,
     );
+    const totalLocalShopPrice = sumBy(orders, (order) =>
+      order.shopifyOrderId || order.shopbaseOrderId ? 0 : Number(order.totalPrice),
+    );
     const totalPrice = sumBy(orders, (order) => Number(order.totalPrice));
   
-    console.log('orders', orders);
-    
-
     // Generate chart data
     let chartData: { label: string; totalPrice: number }[] = [];
   
@@ -155,6 +155,7 @@ export class DashboardService {
       {
         totalShopifyPrice,
         totalShopbasePrice,
+        totalLocalShopPrice,
         revenue: totalPrice,
         revenueByMonthOfYear: chartData,
         producs: productDetailMap,

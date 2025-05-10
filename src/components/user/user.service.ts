@@ -8,7 +8,7 @@ import * as bcrypt from 'bcryptjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/request/create-user.request';
 import { UserEntity } from '@entities/user.entity';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { ListUserQuery } from './dto/query/list-user.query';
 import { plainToClass } from 'class-transformer';
 import { UserResponse } from './dto/response/user.response';
@@ -41,7 +41,15 @@ export class UserService {
   }
 
   async findAll(request: ListUserQuery) {
-    const { page, take, skip } = request;
+    const { page, take, skip, search, sourceUser } = request;
+
+    const baseCondition = search
+      ? [{ username: Like(`%${search}%`) }, { email: Like(`%${search}%`) }]
+      : [{}];
+
+    const whereCondition = sourceUser
+      ? baseCondition.map((cond) => ({ ...cond, source: sourceUser }))
+      : baseCondition;
 
     const [users, number] = await this.userRepository.findAndCount({
       take,
@@ -49,6 +57,7 @@ export class UserService {
       order: {
         id: 'DESC',
       },
+      where: whereCondition,
     });
 
     const pages = Math.ceil(number / take) || 1;
@@ -94,15 +103,13 @@ export class UserService {
       const existUserByPhoneNumber = await this.userRepository.findOne({
         where: {
           phoneNumber: request.phoneNumber,
-        }
+        },
       });
 
       if (existUserByPhoneNumber && existUserByPhoneNumber.id !== id) {
         throw new BadRequestException(ResponseMessageEnum.PHONE_NUMBER_EXISTS);
       }
     }
-
-    
 
     for (const key in request) {
       if (key !== 'id') user[key] = request[key];

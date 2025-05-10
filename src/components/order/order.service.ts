@@ -4,7 +4,7 @@ import * as crypto from 'crypto';
 import * as Bluebird from 'bluebird';
 import { groupBy, isEmpty, keyBy, sumBy } from 'lodash';
 import { Injectable } from '@nestjs/common';
-import { Connection, In, Repository } from 'typeorm';
+import { Brackets, Connection, In, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
 import { VNPay } from 'vn-payments';
@@ -151,7 +151,8 @@ export class OrderService {
   }
 
   async findAll(request: ListOrderQuery, user: UserEntity) {
-    const { page, take, skip } = request;
+    const { page, take, skip, search, sourceOrder } = request;
+
     const query = await this.orderRepository
       .createQueryBuilder('o')
       .select([
@@ -198,6 +199,21 @@ export class OrderService {
 
     if (request.isMe === IsMe.Yes) {
       query.andWhere('o.user_id = :userId', { userId: user.id });
+    }
+
+    if (search) {
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.where('o.receiver ILIKE :search', { search: `%${search}%` })
+            .orWhere('u.email ILIKE :search', { search: `%${search}%` });
+        }),
+      );
+    }
+
+    if (sourceOrder) {
+      query.andWhere('o.source = :sourceOrder', {
+        sourceOrder,
+      });
     }
 
     const [orders, number] = await Promise.all([

@@ -404,7 +404,7 @@ export class ShopBaseService {
           orderDetail.orderId = orderSaved.id;
           orderDetail.productId = productMap[lineItem?.variant?.product_id]?.id || null;
           orderDetail.amount = lineItem?.qty || 0;
-          orderDetail.unitPrice = lineItem?.variant?.price || 0;
+          orderDetail.unitPrice = lineItem?.variant?.price * VND_TO_USD || 0;
 
           return orderDetail;
         });
@@ -475,6 +475,7 @@ export class ShopBaseService {
           phoneNumber: phone,
           gender: 'other',
           password: newPassword,
+          source: 'shopbase',
         });
   
         this.logger.log(

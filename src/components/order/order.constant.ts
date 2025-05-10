@@ -14,6 +14,11 @@ export enum OrderShopifyStatus {
   PENDING = 'pending',
 }
 
+export enum OrderShopbaseStatus {
+  OPEN = 'open',
+  INVOICE_SENT = 'invoice_sent',
+}
+
 export enum IsMe {
   No,
   Yes,

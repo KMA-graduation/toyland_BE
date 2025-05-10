@@ -20,6 +20,7 @@ import { PRODUCT_UPLOAD_PATH, SOURCE_PRODUCT_ENUM } from './product.constant';
 import { unlink } from '@utils/file';
 import { escapeCharForSearch } from '@utils/common';
 import { FavoriteEntity } from '@entities/favorite.entity';
+import { ListProductQuery } from './dto/query/list-product.query';
 
 @Injectable()
 export class ProductService {
@@ -123,8 +124,8 @@ export class ProductService {
     }
   }
 
-  async findAll(request: PaginationQuery) {
-    const { page, take, skip, category, source, sort, keyword } = request;
+  async findAll(request: ListProductQuery) {
+    const { page, take, skip, category, source, sort, keyword, sourceProduct, search } = request;
 
     const query = this.productRepository
       .createQueryBuilder('p')
@@ -164,6 +165,22 @@ export class ProductService {
 
     if (category) {
       query.andWhere('p.category_id = :category', { category });
+    }
+
+    if (search) {
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.where(`lower("p"."name") LIKE lower(:pkeyWord) escape '\\'`, {
+            pkeyWord: `%${escapeCharForSearch(search)}%`,
+          });
+        }),
+      );
+    }
+
+    if (sourceProduct === 'shopify') {
+      query.andWhere('p.shopify_id IS NOT NULL');
+    } else if (sourceProduct === 'shopbase') {
+      query.andWhere('p.shop_base_id IS NOT NULL');
     }
     if (source) {
       switch (+source) {
