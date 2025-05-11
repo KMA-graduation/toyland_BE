@@ -22,5 +22,6 @@ import { OrderEntity } from '@entities/order.entity';
   ],
   controllers: [ShopBaseController],
   providers: [ShopBaseService],
+  exports: [ShopBaseService],
 })
 export class ShopBaseModule {}

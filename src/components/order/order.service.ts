@@ -31,6 +31,7 @@ import { CreatePaymentDto } from './dto/request/create-payment.dto';
 import { getKeyByObject } from '@utils/common';
 import { DeleteProductDto } from './dto/request/delete.product.dto';
 import { ShopifyService } from '@components/shopify/shopify.service';
+// import { ShopBaseService } from '@components/shopbase/shopbase.service';
 
 @Injectable()
 export class OrderService {
@@ -51,6 +52,8 @@ export class OrderService {
     private readonly discountRepository: Repository<DiscountEntity>,
 
     private readonly shopifyService: ShopifyService,
+    
+    // private readonly shopbaseService: ShopBaseService,
 
     private readonly configService: ConfigService,
 

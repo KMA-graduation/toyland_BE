@@ -18,7 +18,7 @@ import { OrderDetailEntity } from '@entities/order-detail.entity';
 import { CronExpression } from '@nestjs/schedule';
 import * as cron from 'node-cron';
 import { UpdateCronJobDto } from './dto/update-cronjob.dto';
-import { convertToLocalPhoneNumber } from '@utils/common';
+import { convertToLocalPhoneNumber } from '@utils/common';                                                                
 
 @Injectable()
 export class ShopifyService {
@@ -283,7 +283,7 @@ export class ShopifyService {
       const timestamp = new Date().getTime();
       this.logger.log(`[SHOPIFY][SYNC_PRODUCT][START]`);
       const query = this.queryString(updatedAtMin, limit, sinceId);
-      products = await this.fetchProduct(query);
+      products = await this.fetchProduct();
       console.log('🚀 [LOGGER] products:', products);
 
       if (products.length) {

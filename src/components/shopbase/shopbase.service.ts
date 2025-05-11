@@ -164,6 +164,68 @@ export class ShopBaseService {
     });
   }
 
+  public async updateInventoryQuantityShopbaseProduct(
+    shopbaseProductId: string,
+    numberOfProductToBuy: number
+  ) {
+    try {
+      const shop = process.env.SHOP_BASE_NAME;
+      const key = process.env.SHOP_BASE_KEY;
+      const password = process.env.SHOP_BASE_PASSWORD;
+      const token = Buffer.from(`${key}:${password}`).toString('base64');
+  
+      const axiosInstance = axios.default.create({
+        baseURL: `https://${shop}.onshopbase.com/admin`,
+        headers: {
+          Authorization: `Basic ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      // 1️⃣ Lấy thông tin sản phẩm
+      const productResponse = await axiosInstance.get(`/products/${shopbaseProductId}.json`);
+      const product = productResponse.data.product;
+  
+      if (!product || !product.variants || product.variants.length === 0) {
+        throw new Error('No variants found for this product');
+      }
+      if (product) {
+        console.log('🚀 [LOGGER] productdfjkalsdfjaldksfjlasdjf:', product);
+        return 
+      }
+      const variant = product.variants[0]; // giả sử có 1 variant
+      const variantId = variant.id;
+      const availableQuantity = variant.inventory_quantity;
+  
+      if (availableQuantity < numberOfProductToBuy) {
+        throw new Error('Not enough inventory available for this product');
+      }
+  
+      const remainingQuantity = availableQuantity - numberOfProductToBuy;
+  
+      // 2️⃣ Cập nhật tồn kho của variant
+      const updateResponse = await axiosInstance.put(`/variants/${variantId}.json`, {
+        variant: {
+          inventory_quantity: remainingQuantity,
+        },
+      });
+  
+      console.log('✅ [SHOPBASE] Inventory updated:', updateResponse.data);
+      return updateResponse.data;
+    } catch (error) {
+      this.logger.error(
+        `[SHOPBASE][UPDATE_INVENTORY]: Error updating inventory for product ${shopbaseProductId}`,
+        error
+      );
+      throw new Error(
+        error.response?.data?.error?.message ||
+        error.message ||
+        'Failed to update ShopBase inventory'
+      );
+    }
+  }
+  
+
   private async fetchProduct(query?: string) {
     const fetchProduct = await this.createAxiosInstance(query);
 
