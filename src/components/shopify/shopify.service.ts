@@ -91,7 +91,7 @@ export class ShopifyService {
 
   public async updateInventoryQuantityShopifyProduct(
     shopifyProductId: number,
-    inventoryQuantity: number
+    numberOfProductToBuy: number
   ) {
     try {
       const axiosInstance = await this.createAxiosInstance();
@@ -108,7 +108,12 @@ export class ShopifyService {
   
       const variantId = product.variants[0].id;
       const inventoryItemId = product.variants[0].inventory_item_id;
-  
+      const availableQuantity = product.variants[0].inventory_quantity;
+
+      if (availableQuantity < numberOfProductToBuy) {
+        throw new Error('Not enough inventory available for this product');
+      }
+
       // 2️⃣ Get the Inventory Level (Location ID)
       const locationsResponse = await axiosInstance.get(
         `/admin/api/2024-01/locations.json`
@@ -120,28 +125,61 @@ export class ShopifyService {
       }
   
       const locationId = locations[0].id; // Assume first location is the one to update
-  
+      const remainingQuantity = availableQuantity - numberOfProductToBuy;
+
       // 3️⃣ Update inventory quantity using Inventory API
       const inventoryUpdateResponse = await axiosInstance.post(
         `/admin/api/2024-01/inventory_levels/set.json`,
         {
           location_id: locationId,
           inventory_item_id: inventoryItemId,
-          available: inventoryQuantity,
+          available: remainingQuantity,
         }
       );
   
       console.log('🚀 [LOGGER] Inventory updated:', inventoryUpdateResponse.data);
       return inventoryUpdateResponse.data;
     } catch (error) {
+      // this.logger.error(
+      //   `[SHOPIFY][UPDATE_INVENTORY]: Error updating inventory for product ${shopifyProductId}`,
+      //   error
+      // );
+      // throw new Error(error.response?.data?.errors || 'Failed to update inventory');
       this.logger.error(
         `[SHOPIFY][UPDATE_INVENTORY]: Error updating inventory for product ${shopifyProductId}`,
         error
       );
-      throw new Error(error.response?.data?.errors || 'Failed to update inventory');
+      throw new Error(
+        error.response?.data?.errors?.[0] || 
+        error.message || 
+        'Failed to update inventory'
+      );
     }
   }
   
+  // public async getProductByShopifyId(shopifyProductId: number,) {
+  //   try {
+  //     const axiosInstance = await this.createAxiosInstance();
+  
+  //     // 1️⃣ Fetch product details to get the variant ID
+  //     const productResponse = await axiosInstance.get(
+  //       `/admin/api/2024-01/products/${shopifyProductId}.json`
+  //     );
+  //     const product = productResponse.data.product;
+  
+  //     if (!product || !product.variants || product.variants.length === 0) {
+  //       throw new Error('No variants found for this product');
+  //     }
+  
+  //     return product;
+  //   } catch (error) {
+  //     this.logger.error(
+  //       `[SHOPIFY][GET_PRODUCT_SHOPIFY]: Error get for product ${shopifyProductId}`,
+  //       error
+  //     );
+  //     throw new Error(error.response?.data?.errors || 'Failed to get product');
+  //   }
+  // }
 
   private mapProducts(products: Array<any>) {
     if (isEmpty(products)) return [];

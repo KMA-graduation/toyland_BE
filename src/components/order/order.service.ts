@@ -543,28 +543,28 @@ export class OrderService {
     }
 
     const productInvalid = [];
-    products.forEach(async (product) => {
+
+    for (const product of products) {
       const detail = serializedOrderDetails[product.id];
       const isOutStock = detail.amount > product.stockAmount;
-      serializedOrderDetails[product.id].unitPrice = product.price;
-
-      if (!isOutStock) {
-        product['stockAmount'] -= detail.amount
-        product['sold'] += detail.amount
-        
-        if (product.shopifyId) {
-          await this.shopifyService.updateInventoryQuantityShopifyProduct(product.shopifyId, product.stockAmount);
-        }
-      }      
-
+    
       if (isOutStock) {
-        productInvalid.push({
-          id: product.id,
-          name: product.name,
-        });
+        productInvalid.push({ id: product.id, name: product.name });
+        continue;
       }
-    });
-
+    
+      product.stockAmount -= detail.amount;
+      product.sold += detail.amount;
+      serializedOrderDetails[product.id].unitPrice = product.price;
+    
+      if (product.shopifyId) {
+        try {
+          await this.shopifyService.updateInventoryQuantityShopifyProduct(product.shopifyId, detail.amount);
+        } catch (err) {
+          productInvalid.push({ id: product.id, name: product.name, message: err.message });
+        }
+      }
+    }
     if (!isEmpty(productInvalid)) {
       return new ResponseBuilder()
         .withCode(ResponseCodeEnum.BAD_REQUEST)
@@ -640,6 +640,7 @@ export class OrderService {
         'p.name as "productName"',
         'od.size as size',
         'od.amount as amount',
+        'p.stockAmount as "stockAmount"',
         `CASE WHEN p.salePrice IS NOT NULL THEN (p.salePrice)::float ELSE (p.price)::float END as price`,
         `JSON_AGG(DISTINCT JSONB_BUILD_OBJECT('id', pi.id, 'productId', pi.productId, 'url', pi.url)) AS images`,
       ])
@@ -649,7 +650,7 @@ export class OrderService {
       .where('o.status = :status', { status: OrderStatus.IN_CART })
       .andWhere('o.userId = :userId', { userId: user.id })
       .groupBy(
-        'o.id, od.productId, p.name, p.salePrice, p.price, od.size, od.amount',
+        'o.id, od.productId, p.name, p.salePrice, p.price, od.size, od.amount, p.stockAmount',
       )
       .getRawMany();
   }
