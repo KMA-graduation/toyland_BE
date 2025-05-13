@@ -132,14 +132,14 @@ export class DashboardService {
   
     // Get product details
     const productDetails = await this.orderDetailRepository
-      .createQueryBuilder('od')
-      .select([
-        'od.product_id AS "productId"',
-        'COUNT(od.product_id)::float AS "totalAmount"',
-      ])
-      .groupBy('od.product_id')
-      .orderBy('COUNT(od.product_id)', 'DESC')
-      .getRawMany();
+    .createQueryBuilder('od')
+    .select([
+      'od.product_id AS "productId"',
+      'SUM(od.amount)::float AS "totalAmount"',
+    ])
+    .groupBy('od.product_id')
+    .orderBy('SUM(od.amount)', 'DESC')
+    .getRawMany();
   
     const productIds = productDetails.map((p) => p.productId);
     const productList = await this.productRepository.findBy({ id: In(productIds) });
