@@ -1,7 +1,7 @@
 import { IsMe } from '@components/order/order.constant';
 import { PaginationQuery } from '@utils/pagination.query';
-import { Transform } from 'class-transformer';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsDate, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class ListOrderQuery extends PaginationQuery {
   @IsEnum(IsMe)
@@ -16,4 +16,13 @@ export class ListOrderQuery extends PaginationQuery {
   @IsOptional()
   @IsString()
   sourceOrder?: string;
+
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  date?: Date;
 }

@@ -154,8 +154,8 @@ export class OrderService {
   }
 
   async findAll(request: ListOrderQuery, user: UserEntity) {
-    const { page, take, skip, search, sourceOrder } = request;
-
+    const { page, take, skip, search, sourceOrder, status, date } = request;
+    
     const query = await this.orderRepository
       .createQueryBuilder('o')
       .select([
@@ -170,6 +170,8 @@ export class OrderService {
         'o.paymentType AS "paymentType"',
         'o.created_at AS "createdAt"',
         'o.updated_at AS "updatedAt"',
+        'o.shopify_order_id AS "shopifyOrderId"',
+        'o.shopbase_order_id AS "shopbaseOrderId"',
         `JSON_BUILD_OBJECT('id', d.id, 'percent', d.percent, 'price', d.price) AS discount`,
         `JSON_BUILD_OBJECT('id', u.id, 'username', u.username, 'email', u.email) AS user`,
         `JSON_AGG(DISTINCT JSONB_BUILD_OBJECT(
@@ -195,7 +197,7 @@ export class OrderService {
         'qb',
         'qb.orderId = o.id',
       )
-      .where('o.status <> :status', { status: OrderStatus.IN_CART })
+      .where('o.status <> :inCartStatus', { inCartStatus: OrderStatus.IN_CART })
       .groupBy('o.id')
       .addGroupBy('d.id')
       .addGroupBy('u.id');
@@ -219,6 +221,20 @@ export class OrderService {
       });
     }
 
+    if (status) {
+      query.andWhere('o.status = :status', { status });
+    }
+    
+    if (date) {
+      const startDate = moment(date).startOf('day').toDate();
+      const endDate = moment(date).endOf('day').toDate();   
+    
+      query.andWhere('o.created_at BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      });
+    }
+    console.log(query.getSql());
     const [orders, number] = await Promise.all([
       query
         .orderBy('o.created_at', 'DESC')
