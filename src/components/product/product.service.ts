@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { PaginationQuery } from '@utils/pagination.query';
+// import { PaginationQuery } from '@utils/pagination.query';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { ProductEntity } from '@entities/product.entity';
 import { Brackets, DataSource,Repository } from 'typeorm';
@@ -21,6 +21,7 @@ import { unlink } from '@utils/file';
 import { escapeCharForSearch } from '@utils/common';
 import { FavoriteEntity } from '@entities/favorite.entity';
 import { ListProductQuery } from './dto/query/list-product.query';
+import * as moment from 'moment';
 
 @Injectable()
 export class ProductService {
@@ -125,7 +126,7 @@ export class ProductService {
   }
 
   async findAll(request: ListProductQuery) {
-    const { page, take, skip, category, source, sort, keyword, sourceProduct, search } = request;
+    const { page, take, skip, category, source, sort, keyword, sourceProduct, search, date } = request;
 
     const query = this.productRepository
       .createQueryBuilder('p')
@@ -163,9 +164,20 @@ export class ProductService {
       .leftJoin(CategoryEntity, 'c', 'c.id = p.category_id')
       .leftJoin(BranchEntity, 'b', 'b.id = p.branch_id');
 
-    if (category) {
-      query.andWhere('p.category_id = :category', { category });
+    if (+category) {
+      console.log(category);
+      query.andWhere('p.category_id = :category', { category: +category });
     }
+
+    if (date) {
+          const startDate = moment(date).startOf('day').toDate();
+          const endDate = moment(date).endOf('day').toDate();   
+        
+          query.andWhere('p.created_at BETWEEN :startDate AND :endDate', {
+            startDate,
+            endDate,
+          });
+        }
 
     if (search) {
       query.andWhere(

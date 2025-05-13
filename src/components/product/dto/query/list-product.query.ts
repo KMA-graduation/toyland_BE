@@ -1,5 +1,6 @@
 import { PaginationQuery } from '@utils/pagination.query';
-import { IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsDate, IsOptional, IsString } from 'class-validator';
 
 export class ListProductQuery extends PaginationQuery {
   @IsOptional()
@@ -9,4 +10,9 @@ export class ListProductQuery extends PaginationQuery {
   @IsOptional()
   @IsString()
   sourceProduct?: string;
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  date?: Date;
 }
