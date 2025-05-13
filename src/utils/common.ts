@@ -1,3 +1,4 @@
+import { OrderStatus } from '@components/order/order.constant';
 import {
   compact,
   find,
@@ -121,4 +122,30 @@ export const convertToLocalPhoneNumber = (phoneNumber: string) => {
     return '0' + phoneNumber.slice(2);
   }
   return phoneNumber;
+}
+
+export const convertShopifyOrderStatusToLocalShop = (status: string) => {
+  switch (status) {
+    case "waiting_payment":
+      return OrderStatus.WAITING_PAYMENT;
+    case "paid":
+    case "completed":
+      return OrderStatus.SUCCESS;
+    case "open":
+      case "pending":
+      return OrderStatus.WAITING_CONFIRM;
+    default:
+      return OrderStatus.WAITING_CONFIRM;
+  }
+}
+
+export const convertShopbaseOrderStatusToLocalShop = (status: string) => {
+  switch (status) {
+    case "open":
+      return OrderStatus.WAITING_CONFIRM;
+    case "invoice_sent":
+      return OrderStatus.SUCCESS;
+    default:
+      return OrderStatus.WAITING_CONFIRM;
+  }
 }

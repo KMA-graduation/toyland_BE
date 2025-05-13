@@ -10,7 +10,7 @@ import { ResponseBuilder } from '@utils/response-builder';
 import { ResponseCodeEnum } from '@enums/response-code.enum';
 import { ProductImageEntity } from '@entities/product-image.entity';
 import { decode } from 'he';
-import { convertToLocalPhoneNumber, VND_TO_USD } from '@utils/common';
+import { convertShopbaseOrderStatusToLocalShop, convertToLocalPhoneNumber, VND_TO_USD } from '@utils/common';
 import { UserEntity } from '@entities/user.entity';
 import { OrderEntity } from '@entities/order.entity';
 import { OrderDetailEntity } from '@entities/order-detail.entity';
@@ -426,9 +426,9 @@ export class ShopBaseService {
        const currentOrder = systemOrderMap[draft_order?.id] as OrderEntity;
        // đã tồn tại order thì chỉ cập nhật trạng thái
        if (!isEmpty(currentOrder)) {
-        currentOrder.status = draft_order?.status;
-        currentOrder.financialStatus = draft_order?.status;
-        currentOrder.fulfillmentStatus = draft_order?.status;
+        currentOrder.status = convertShopbaseOrderStatusToLocalShop(draft_order?.status);
+        currentOrder.financialStatus = convertShopbaseOrderStatusToLocalShop(draft_order?.status);
+        currentOrder.fulfillmentStatus = convertShopbaseOrderStatusToLocalShop(draft_order?.status);
 
         console.log('🚀 [LOGGER]  [SHOP_BASE][UPDATE_ORDER]:', currentOrder?.id);
 
@@ -445,7 +445,7 @@ export class ShopBaseService {
 
         const orderEntity = new OrderEntity();
         orderEntity.userId = userMap[customer_address?.customer_id]?.id || null;
-        orderEntity.status = draft_order?.status;
+        orderEntity.status = convertShopbaseOrderStatusToLocalShop(draft_order?.status);
         orderEntity.financialStatus = draft_order?.status;
         orderEntity.fulfillmentStatus = draft_order?.status;
         orderEntity.totalAmount = totalAmount;

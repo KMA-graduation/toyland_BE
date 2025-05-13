@@ -18,7 +18,7 @@ import { OrderDetailEntity } from '@entities/order-detail.entity';
 import { CronExpression } from '@nestjs/schedule';
 import * as cron from 'node-cron';
 import { UpdateCronJobDto } from './dto/update-cronjob.dto';
-import { convertToLocalPhoneNumber } from '@utils/common';                                                                
+import { convertShopifyOrderStatusToLocalShop, convertToLocalPhoneNumber } from '@utils/common';                                                                
 
 @Injectable()
 export class ShopifyService {
@@ -372,10 +372,10 @@ export class ShopifyService {
         const currentOrder = systemOrderMap[shopifyOrderId] as OrderEntity;
         // đã tồn tại order thì chỉ cập nhật trạng thái
         if (!isEmpty(currentOrder || {})) {
-          currentOrder['status'] = status || financial_status;
-          currentOrder['financialStatus'] = financial_status;
-          currentOrder['fulfillmentStatus'] = fulfillment_status;
-
+          currentOrder['status'] = convertShopifyOrderStatusToLocalShop(status || financial_status);
+          currentOrder['financialStatus'] = convertShopifyOrderStatusToLocalShop(financial_status);
+          currentOrder['fulfillmentStatus'] = convertShopifyOrderStatusToLocalShop(fulfillment_status);
+          
           await queryRunner.manager.save(currentOrder);
           return;
         }
@@ -388,9 +388,9 @@ export class ShopifyService {
 
         const orderEntity = new OrderEntity();
         orderEntity.userId = userMap[customer?.id]?.id || null;
-        orderEntity.status = status || financial_status;
-        orderEntity.financialStatus = financial_status;
-        orderEntity.fulfillmentStatus = fulfillment_status;
+        orderEntity.status = convertShopifyOrderStatusToLocalShop(status) || convertShopifyOrderStatusToLocalShop(financial_status);
+        orderEntity.financialStatus = convertShopifyOrderStatusToLocalShop(financial_status);
+        orderEntity.fulfillmentStatus = convertShopifyOrderStatusToLocalShop(fulfillment_status);
         orderEntity.totalPrice = Number(total_price);
         orderEntity.totalAmount = totalAmount;
         orderEntity.paymentType = 'shopify_payment';
