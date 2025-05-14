@@ -75,6 +75,7 @@ export class ProductService {
       for (const [key, value] of Object.entries(request)) {
         product[key] = value;
       }
+      product["sold"] = 0;
 
       const productEntity = this.productRepository.create(product);
       const result = await this.productRepository.save(productEntity);
