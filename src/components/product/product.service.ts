@@ -248,6 +248,53 @@ export class ProductService {
       .build();
   }
 
+  async findTopProduct() {
+    const query = this.productRepository
+      .createQueryBuilder('p')
+      .select([
+        'p.id AS id',
+        'p.name AS name',
+        'p.slug AS slug',
+        'p.description AS description',
+        'p.price AS price',
+        'p.sale_price AS "salePrice"',
+        'p.stock_amount AS "stockAmount"',
+        'p.sold AS "sold"',
+        'p.created_at AS "createdAt"',
+        'p.updated_at AS "updatedAt"',
+        `JSONB_BUILD_OBJECT('id', b.id, 'name', b.name) AS branch`,
+        `JSONB_BUILD_OBJECT('id', c.id, 'name', c.name) AS category`,
+        `JSON_AGG(DISTINCT JSONB_BUILD_OBJECT(
+          'id', qb2.id, 'url', qb2.url
+        )) AS "images"`,
+      ])
+      .leftJoin(
+        (qb) =>
+          qb
+            .select([
+              'pi.id AS id',
+              'pi.product_id AS product_id',
+              'pi.url AS url',
+            ])
+            .from(ProductImageEntity, 'pi'),
+        'qb2',
+        'qb2.product_id = p.id',
+      )
+      .leftJoin(CategoryEntity, 'c', 'c.id = p.category_id')
+      .leftJoin(BranchEntity, 'b', 'b.id = p.branch_id')
+      .orderBy('p.sold', 'DESC')
+      .groupBy('p.id')
+      .addGroupBy('c.id')
+      .addGroupBy('b.id');
+
+    const products = await query.limit(10).getRawMany();
+
+    return new ResponseBuilder()
+      .withData(products)
+      .withCode(ResponseCodeEnum.SUCCESS)
+      .build();
+  }
+
   async findOne(id: number) {
     const product = await this.productRepository
       .createQueryBuilder('p')

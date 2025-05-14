@@ -56,6 +56,12 @@ export class ProductController {
     return this.productService.findAll(request);
   }
 
+  @Get("/top")
+  @Auth(AuthType.Public)
+  findTopProduct() {
+    return this.productService.findTopProduct();
+  }
+
   @Get('/:id')
   @Auth(AuthType.Public)
   findOne(@Param('id') id: number) {
