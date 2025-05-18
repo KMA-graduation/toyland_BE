@@ -49,7 +49,7 @@ export class AuthService {
       role = 0,
       gender,
       address,
-      birth,
+      birth = new Date(),
     } = signUpDto;
     const file = signUpDto?.file || ({} as any);
 

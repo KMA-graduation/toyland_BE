@@ -123,9 +123,9 @@ export class ShopBaseService {
       'x-shopbase-access-token': 'default',
       'referer': `https://${shop}.onshopbase.com/admin/draft_orders`,
       'origin': `https://${shop}.onshopbase.com`,
-      'x-sb-fp-hash': '618a0ef02626b076d3df1c412f57eefd',
+      'x-sb-fp-hash': '1bf8ef1ac6386831125c4dd52a3a2bd1',
       'x-sb-captcha': 'e30=',
-      'Cookie': 'ajs_group_id=null; _ga=GA1.1.279936704.1743431708; _fbp=fb.1.1743431709685.850514486145181587; _hjSessionUser_1386024=eyJpZCI6IjRlYWRkYThjLTI0YTYtNTE5OS04ZWVmLTc0NGU5NTA4MTE0MiIsImNyZWF0ZWQiOjE3NDM0MzE3MTc4MzgsImV4aXN0aW5nIjp0cnVlfQ==; sb_sso=ef68bf06fd09c1fb4d320fb5ab2a54be3477a2f51b9a02a9dad07809b80bc23a; sh_ac=default; _ga=GA1.3.279936704.1743431708; hj_tc=6993176e; ajs_user_id=10656103; ajs_anonymous_id=%22b2105862-067d-42ff-ab54-aa31058b2452%22; _cioid=10656103; i18n_redirected=en; csrftoken=XR1Ak9LNMoZLwyEB8aU2cWOhFnx70H2q; X-Lang=en-vn; _gid=GA1.3.997029157.1746604660; crisp-client%2Fsession%2Ff5c7331c-510d-4a08-bf62-8c63aeeb568e=session_7619cba8-9be2-49d3-aadf-4c7f4ec6ff67; X-Buyer-AB-Test-Checked=true; auth-cookie=MTc0NjYwNDY2OHxEWDhFQVFMX2dBQUJFQUVRQUFEXzB2LUFBQUlHYzNSeWFXNW5EQk1BRVZWVFJWSmZRVU5EUlZOVFgxUlBTMFZPQm5OMGNtbHVad3hDQUVCaE1UazJORFk1TnpVMk5qRmpZamRqWVRsaVlqY3hPVFUwTVdNM09HWm1ZamRoWVdRd01qZGpZVE0wTjJOak1HTXhPVFZoWVRBMFlUWmxOekpqWTJZeUJuTjBjbWx1Wnd3VEFCRlRTRTlRWDBGRFEwVlRVMTlVVDB0RlRnWnpkSEpwYm1jTVFnQkFaV1kyT0dKbU1EWm1aREE1WXpGbVlqUmtNekl3Wm1JMVlXSXlZVFUwWW1Vek5EYzNZVEptTlRGaU9XRXdNbUU1WkdGa01EYzRNRGxpT0RCaVl6SXpZUT09fGY0dTBtiZKPKL_0GgEdUZmO1N-mNCUdukLcUaRdXt-L; _gali=app; ph_phc_Oww2eJIZyOJFKXXcHaEUZUi70qVB0Sp4J1Xnh8v8Bxa_posthog=%7B%22distinct_id%22%3A%220195eca0-a815-7c68-9708-39691de33bd0%22%2C%22%24device_id%22%3A%220195eca0-a815-7c68-9708-39691de33bd0%22%2C%22%24user_state%22%3A%22anonymous%22%2C%22%24sesid%22%3A%5B1746604702675%2C%220196a9c0-158a-7fba-9da6-96562731836a%22%2C1746604660106%5D%7D; _ga_K91SP82XV5=GS2.1.s1746604660$o7$g1$t1746604703$j0$l0$h0',
+      'Cookie': 'ajs_group_id=null; _ga=GA1.1.279936704.1743431708; _fbp=fb.1.1743431709685.850514486145181587; _hjSessionUser_1386024=eyJpZCI6IjRlYWRkYThjLTI0YTYtNTE5OS04ZWVmLTc0NGU5NTA4MTE0MiIsImNyZWF0ZWQiOjE3NDM0MzE3MTc4MzgsImV4aXN0aW5nIjp0cnVlfQ==; crisp-client%2Fsession%2Ff5c7331c-510d-4a08-bf62-8c63aeeb568e=session_cc150998-cb80-4d64-9b33-57fa25fd6fbd; sh_ac=default; _ga=GA1.3.279936704.1743431708; _gid=GA1.3.62691780.1747582487; ajs_user_id=10657585; ajs_anonymous_id=%22a300d656-83eb-40f6-bbe0-1709fed0abf6%22; _cioid=10657585; i18n_redirected=en; X-Buyer-AB-Test-Checked=true; _hjSession_1386024=eyJpZCI6IjZiNGUxNTA4LTIyMDMtNDg5OS04OTAzLWZjZjY4YTE4MGJiMCIsImMiOjE3NDc1ODI0OTU5OTMsInMiOjAsInIiOjAsInNiIjowLCJzciI6MCwic2UiOjAsImZzIjowLCJzcCI6MH0=; sb_sso=96f2f69724f88348f55e9037cf10cc037062c75131ac3038abc5ada7354c21c0; ph_phc_Oww2eJIZyOJFKXXcHaEUZUi70qVB0Sp4J1Xnh8v8Bxa_posthog=%7B%22distinct_id%22%3A%220195eca0-a815-7c68-9708-39691de33bd0%22%2C%22%24device_id%22%3A%220195eca0-a815-7c68-9708-39691de33bd0%22%2C%22%24user_state%22%3A%22anonymous%22%2C%22%24sesid%22%3A%5B1747582718035%2C%220196e407-98cb-7fe2-9006-0d8e00b953e6%22%2C1747582425291%5D%7D; csrftoken=3PFwBmByC0h6fYkKqTtA8WXHuTKYcsfL; hj_tc=2a630dee; _ga_K91SP82XV5=GS2.1.s1747582425$o10$g1$t1747582738$j0$l0$h0; auth-cookie=MTc0NzU4MjczOXxEWDhFQVFMX2dBQUJFQUVRQUFEXzB2LUFBQUlHYzNSeWFXNW5EQk1BRVZOSVQxQmZRVU5EUlZOVFgxUlBTMFZPQm5OMGNtbHVad3hDQUVBNU5tWXlaalk1TnpJMFpqZzRNelE0WmpVMVpUa3dNemRqWmpFd1kyTXdNemN3TmpKak56VXhNekZoWXpNd016aGhZbU0xWVdSaE56TTFOR015TVdNd0JuTjBjbWx1Wnd3VEFCRlZVMFZTWDBGRFEwVlRVMTlVVDB0RlRnWnpkSEpwYm1jTVFnQkFObVEwWm1NeE5EbG1ZVEJtTWpKaE56WTJNV1kxTldRMk1XTmtZemMzTVRobVpqWTVOVEJtTkdZMVlUQmlPREptWVdNeE1XVTFOV1JrTm1NNE1XVm1OZz09fPX1V-KrJvha9HPS0v9HsHt21i_M78VoF2b33p9bk6bn',
     };
   
     const data = {
@@ -245,8 +245,8 @@ export class ShopBaseService {
       const decodeDescription = decode(data?.body_html);
       const plainDescription = decodeDescription.replace(/<[^>]+>/g, '');
       const price = data?.variants?.[0]?.price || 0;
-      const stockAmountShopBase = data?.variants?.[0]?.inventory_quantity || 0;
-  
+      const stockAmountShopBase = data?.variants?.[0]?.inventory_quantity || +data?.variants?.[0]?.sku || 0;
+      
       if (existedProduct) {
         product = Object.assign(new ProductEntity(), existedProduct, {
           name: data?.title ?? existedProduct.name,
@@ -430,8 +430,6 @@ export class ShopBaseService {
         currentOrder.financialStatus = convertShopbaseOrderStatusToLocalShop(draft_order?.status);
         currentOrder.fulfillmentStatus = convertShopbaseOrderStatusToLocalShop(draft_order?.status);
 
-        console.log('🚀 [LOGGER]  [SHOP_BASE][UPDATE_ORDER]:', currentOrder?.id);
-
         await queryRunner.manager.save(currentOrder);
         return;
        }
@@ -458,7 +456,6 @@ export class ShopBaseService {
         orderEntity.shopbaseOrderId = draft_order?.id;
 
         const orderSaved = await queryRunner.manager.save(orderEntity);
-        console.log('🚀 [LOGGER]  orderSaved:', orderSaved);
 
         const orderDetails = cart_items_dto?.map((lineItem) => {
           const orderDetail = new OrderDetailEntity();
