@@ -190,7 +190,7 @@ export class ShopBaseService {
         throw new Error('No variants found for this product');
       }
       if (product) {
-        console.log('🚀 [LOGGER] productdfjkalsdfjaldksfjlasdjf:', product);
+        // console.log('🚀 [LOGGER] productdfjkalsdfjaldksfjlasdjf:', product);
         return 
       }
       const variant = product.variants[0]; // giả sử có 1 variant

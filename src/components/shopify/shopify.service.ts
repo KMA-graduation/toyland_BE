@@ -411,7 +411,7 @@ export class ShopifyService {
           orderDetail.orderId = orderSaved.id;
           orderDetail.productId = product?.id || null;
           orderDetail.amount = Number(quantity);
-          orderDetail.unitPrice = Number(price);
+          orderDetail.unitPrice = Number(price) + Number(price) * 0.1;
 
           return orderDetail;
         });

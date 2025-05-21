@@ -215,10 +215,17 @@ export class OrderService {
       );
     }
 
-    if (sourceOrder) {
-      query.andWhere('o.source = :sourceOrder', {
-        sourceOrder,
-      });
+    // if (sourceOrder) {
+    //   query.andWhere('o.source = :sourceOrder', {
+    //     sourceOrder,
+    //   });
+    // }
+
+     // Filter by source
+     if (["shopify", "shopbase"].includes(sourceOrder)) {
+      query.andWhere('o.source = :sourceOrder', { sourceOrder });
+    } else if (sourceOrder) {
+      query.andWhere("(o.source IS NULL OR (o.source != 'shopify' AND o.source != 'shopbase'))");
     }
 
     if (status) {
@@ -234,7 +241,7 @@ export class OrderService {
         endDate,
       });
     }
-    console.log(query.getSql());
+    
     const [orders, number] = await Promise.all([
       query
         .orderBy('o.created_at', 'DESC')

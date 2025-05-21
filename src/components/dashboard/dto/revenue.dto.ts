@@ -14,4 +14,10 @@ export class RevenueDto {
 
   @IsOptional()
   month: number;
+
+  @IsOptional()
+  source: string;
+
+  // @IsOptional()
+  // category: string;
 }

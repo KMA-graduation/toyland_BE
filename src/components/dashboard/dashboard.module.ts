@@ -7,6 +7,7 @@ import { ProductEntity } from '@entities/product.entity';
 import { ProductImageEntity } from '@entities/product-image.entity';
 import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
+import { CategoryEntity } from '@entities/category.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { DashboardService } from './dashboard.service';
       ProductImageEntity,
       OrderEntity,
       OrderDetailEntity,
+      CategoryEntity,
     ]),
   ],
   controllers: [DashboardController],
