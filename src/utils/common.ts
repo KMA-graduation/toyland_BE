@@ -132,7 +132,7 @@ export const convertShopifyOrderStatusToLocalShop = (status: string) => {
     case "completed":
       return OrderStatus.SUCCESS;
     case "open":
-      case "pending":
+    case "pending":
       return OrderStatus.WAITING_CONFIRM;
     default:
       return OrderStatus.WAITING_CONFIRM;

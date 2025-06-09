@@ -498,13 +498,20 @@ export class ShopifyService {
 
   private mapCustomers(customers: ShopifyCustomer[]) {
     const mappedCustomers = customers.map(
-      ({ email, first_name, last_name, id, phone }) => {
-        
+      ({ email, first_name, last_name, id, phone, addresses }) => {
+          const addressParts = [
+            addresses?.[0]?.address2,
+            addresses?.[0]?.address1,
+            addresses?.[0]?.city,
+            addresses?.[0]?.country,
+          ];
+
         return {
           shopifyCustomerId: `${id}`,
           email,
           username: `${first_name || ''} ${last_name || ''}`,
           phone: convertToLocalPhoneNumber(phone),
+          address: addressParts.filter(Boolean).join(', '),
         };
       },
     );
@@ -517,8 +524,9 @@ export class ShopifyService {
     email: string;
     username: string;
     phone: string
+    address?: string;
   }) {
-    const { shopifyCustomerId, email, phone, username } = data;
+    const { shopifyCustomerId, email, phone, username, address } = data;
 
     const [currentCustomerFindByPhone, currentCustomerFindByEmail] = await Promise.all([
       this.userRepository.findOneBy({
@@ -542,6 +550,7 @@ export class ShopifyService {
           username,
           email: currentCustomerFindByPhone.email,
           phoneNumber: phone,
+          address: address || currentCustomerFindByPhone.address || '',
         });
         this.logger.log(
           `[SHOPIFY][UPDATE_CUSTOMER]: shopifyCustomerId: ${shopifyCustomerId}`,
@@ -555,6 +564,7 @@ export class ShopifyService {
           username,
           email,
           phoneNumber: phone,
+          address: address || '',
           gender: "other",
           password: newPassword,
           source: 'shopify',
