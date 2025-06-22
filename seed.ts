@@ -11,9 +11,9 @@ const pool = new Pool({
   user: process.env.DATABASE_POSTGRES_USERNAME,
   password: process.env.DATABASE_POSTGRES_PASSWORD,
   database: process.env.DATABASE_NAME,
-  // ssl: {
-  //   rejectUnauthorized: false,
-  // }
+  ssl: {
+    rejectUnauthorized: false,
+  }
 });
 
 // Kết nối cơ sở dữ liệu

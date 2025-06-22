@@ -38,9 +38,9 @@ COMMIT;
 
 
 BEGIN;
-INSERT INTO "public"."users" ("id", "email", "username", "password", "role", "is_active", "created_at", "updated_at") VALUES (1, 'vandungday@gmail.com', 'vandungday', '$2b$07$KAX0Ckria4nGBfy7Ths8JeSn5fU6PjiDkKAhDY2r/cMNBTkGOcuYi', 0, 't', '2024-04-24 15:07:06.256057+00', '2024-04-24 15:07:06.256057+00');
-INSERT INTO "public"."users" ("id", "email", "username", "password", "role", "is_active", "created_at", "updated_at") VALUES (2, 'admin@gmail.com', 'admin', '$2b$07$L7.lXL7ywrVOmkPs1F0w4.w0zMe7JZrOHJQ66yaFxGPVQM.A6zgJ6', 1, 't', '2024-04-24 15:07:14.396549+00', '2024-04-24 15:07:14.396549+00');
-INSERT INTO "public"."users" ("id", "email", "username", "password", "role", "is_active", "created_at", "updated_at") VALUES (3, 'cuongcter@gmail.com', 'cuongcter', '$2b$07$eb0OYy018F1p.MkvPfzfuO0/8Zd2HZod5r/Izn0J1txYdfrfdCf5O', 0, 't', '2024-04-24 15:08:00.33435+00', '2024-04-24 15:08:00.33435+00');
+INSERT INTO "public"."users" ("id", "email", "username", "password", "role", "address", "phone_number", "gender", "is_active", "created_at", "updated_at") VALUES (1, 'vandungday@gmail.com', 'vandungday', '$2b$07$KAX0Ckria4nGBfy7Ths8JeSn5fU6PjiDkKAhDY2r/cMNBTkGOcuYi', 0, 'Hiep Hoa, Bac Giang', '0988127056', 'male', 't', '2024-04-24 15:07:06.256057+00', '2024-04-24 15:07:06.256057+00');
+INSERT INTO "public"."users" ("id", "email", "username", "password", "role", "address", "phone_number", "gender", "is_active", "created_at", "updated_at") VALUES (2, 'admin@gmail.com', 'admin', '$2b$07$L7.lXL7ywrVOmkPs1F0w4.w0zMe7JZrOHJQ66yaFxGPVQM.A6zgJ6', 1, 'Hiep Hoa, Bac Giang', '0988127057', 'male', 't', '2024-04-24 15:07:14.396549+00', '2024-04-24 15:07:14.396549+00');
+INSERT INTO "public"."users" ("id", "email", "username", "password", "role", "address", "phone_number", "gender", "is_active", "created_at", "updated_at") VALUES (3, 'cuongcter@gmail.com', 'cuongcter', '$2b$07$eb0OYy018F1p.MkvPfzfuO0/8Zd2HZod5r/Izn0J1txYdfrfdCf5O', 0, 'Hiep Hoa, Bac Giang', '0988127058', 'male', 't', '2024-04-24 15:08:00.33435+00', '2024-04-24 15:08:00.33435+00');
 COMMIT;
 
 DO $$
